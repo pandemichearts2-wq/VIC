@@ -1,5 +1,6 @@
 const API_URL = window.VIC_CONFIG?.API_URL || "";
 const $ = (id) => document.getElementById(id);
+const VIDEO_GENRES = ["雑談", "歌枠", "ゲーム実況", "お絵描き", "ASMR", "料理", "開封", "旅行・旅", "作業", "企画", "耐久", "コラボ", "案件", "ニュース", "読書・朗読", "その他"];
 const state = { selectedProfile: null, searchTimer: 0, searchRequest: 0 };
 
 function escapeHtml(value) {
@@ -53,8 +54,9 @@ function setupTabs() {
 }
 
 function validateInitial(data) {
-  const required = ["activityName", "reading", "affiliation", "xUrl", "youtubeUrl", "recommendedVideoUrl", "recommendationPoint"];
+  const required = ["activityName", "reading", "affiliation", "xUrl", "youtubeUrl", "genre", "recommendedVideoUrl", "recommendationPoint"];
   if (required.some((key) => !String(data[key] || "").trim())) throw new Error("すべての項目を入力してください。");
+  if (!VIDEO_GENRES.includes(String(data.genre || ""))) throw new Error("動画ジャンルを選択してください。");
   for (const key of ["xUrl", "youtubeUrl", "recommendedVideoUrl"]) {
     if (!isHttpsUrl(data[key])) throw new Error("リンクは https:// から入力してください。");
   }
@@ -62,6 +64,7 @@ function validateInitial(data) {
 
 function validateAddition(data) {
   if (!state.selectedProfile || !data.profileId) throw new Error("登録済みVTuberを選択してください。");
+  if (!VIDEO_GENRES.includes(String(data.genre || ""))) throw new Error("動画ジャンルを選択してください。");
   if (!String(data.recommendedVideoUrl || "").trim() || !String(data.recommendationPoint || "").trim()) {
     throw new Error("おすすめ動画リンクとおすすめポイントを入力してください。");
   }
@@ -83,7 +86,7 @@ function setupForms() {
       button.textContent = "送信中…";
       await postJson({ action: "submitInitial", ...data });
       initialForm.reset();
-      setMessage(initialForm, "送信しました。確認後に本日のおすすめ候補へ反映されます。", "success");
+      setMessage(initialForm, "送信しました。確認後におすすめへ反映されます。", "success");
     } catch (error) {
       setMessage(initialForm, error.message || "送信できませんでした。", "error");
     } finally {

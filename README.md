@@ -1,24 +1,19 @@
-# VIC - VTuber Introduction Center -
+# VIC ジャンル別おすすめ・最大10件表示版
 
-VIC公開サイト・登録ページ・管理画面の完成版です。
-
-## 公開ページ
-- `index.html` 本日のおすすめVTuber
-- `register.html` 初回登録／おすすめ追加
-- `admin.html` 管理者専用画面
-
-## 管理画面でできること
-- 管理パスワードによるログイン
-- 申請の確認・承認・掲載不可
-- 公開VTuberの編集・公開／非公開・削除
-- 公開おすすめ動画の編集・公開／非公開・削除
+## 主な変更
+- 「Community Recommendation」の直下におすすめ一覧を配置
+- 公開中のおすすめを最大10件ランダム表示
+- ジャンル選択で、そのジャンル内からランダム表示
+- 「このジャンルで選び直す」で再抽選
+- 初回登録・おすすめ追加の両方に動画ジャンルを追加
+- 管理画面でもジャンルの確認・編集が可能
 
 ## 更新手順
-1. Apps Scriptのコードを `AppsScript-Code.gs` に全置換して保存。
-2. スプレッドシートを再読み込み。
-3. `VIC → 管理パスワードを設定` で8文字以上のパスワードを設定。
-4. `デプロイ → デプロイを管理 → 鉛筆 → 新バージョン → デプロイ`。
-5. GitHubへ `admin.html`、`admin.js`、更新済み `styles.css` を含むサイトファイルを上書きアップロード。
-6. `https://pandemichearts2-wq.github.io/VIC/admin.html` を開いてログイン。
+1. Apps Scriptを `AppsScript-Code.gs` の内容へ置き換えて保存
+2. Apps Scriptで `setupSheets` を一度実行（既存データは削除されず、ジャンル列が追加されます）
+3. 「デプロイを管理」から既存ウェブアプリを新バージョンで更新
+4. GitHubへ `index.html`、`app.js`、`register.html`、`register.js`、`admin.js`、`styles.css` を上書きアップロードしてコミット
+5. 反映後、ブラウザで Ctrl + F5
 
-`config.js` には現在のVIC Apps Script URLを設定済みです。
+## 既存のおすすめデータ
+ジャンル列が空の既存データは、表示上「その他」として扱います。管理画面から正しいジャンルへ変更できます。

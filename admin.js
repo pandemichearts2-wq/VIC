@@ -1,5 +1,6 @@
 const API_URL = window.VIC_CONFIG?.API_URL || "";
 const $ = (id) => document.getElementById(id);
+const VIDEO_GENRES = ["雑談", "歌枠", "ゲーム実況", "お絵描き", "ASMR", "料理", "開封", "旅行・旅", "作業", "企画", "耐久", "コラボ", "案件", "ニュース", "読書・朗読", "その他"];
 const state = {
   token: sessionStorage.getItem("vicAdminToken") || "",
   tab: "submissions",
@@ -117,6 +118,7 @@ function renderSubmissionPayload(item) {
         <div><dt>個人／企業名</dt><dd>${esc(payload.affiliation)}</dd></div>
         <div><dt>X</dt><dd>${safeUrl(payload.xUrl) ? `<a href="${esc(payload.xUrl)}" target="_blank" rel="noopener noreferrer">リンクを開く</a>` : ""}</dd></div>
         <div><dt>YouTube</dt><dd>${safeUrl(payload.youtubeUrl) ? `<a href="${esc(payload.youtubeUrl)}" target="_blank" rel="noopener noreferrer">チャンネルを開く</a>` : ""}</dd></div>
+        <div><dt>動画ジャンル</dt><dd>${esc(payload.genre || "その他")}</dd></div>
         <div><dt>おすすめ動画</dt><dd>${videoUrl ? `<a href="${esc(videoUrl)}" target="_blank" rel="noopener noreferrer">動画を開く</a>` : ""}</dd></div>
       </dl>
       <div class="admin-point"><strong>おすすめポイント</strong><p>${point}</p></div>`;
@@ -124,6 +126,7 @@ function renderSubmissionPayload(item) {
   return `
     <dl class="admin-data-grid">
       <div><dt>追加先</dt><dd>${esc(payload.activityName)}</dd></div>
+      <div><dt>動画ジャンル</dt><dd>${esc(payload.genre || "その他")}</dd></div>
       <div><dt>おすすめ動画</dt><dd>${videoUrl ? `<a href="${esc(videoUrl)}" target="_blank" rel="noopener noreferrer">動画を開く</a>` : ""}</dd></div>
     </dl>
     <div class="admin-point"><strong>おすすめポイント</strong><p>${point}</p></div>`;
@@ -225,7 +228,7 @@ function recommendationCard(item) {
   return `
     <article class="admin-card admin-content-card">
       <div class="admin-card-head">
-        <div><span class="admin-badge">おすすめ動画</span><h3>${esc(data.activityName)}</h3><p>${esc(fmtDate(data.approvedAt))}</p></div>
+        <div><span class="admin-badge">おすすめ動画</span><h3>${esc(data.activityName)}</h3><p>${esc(data.genre || "その他")} / ${esc(fmtDate(data.approvedAt))}</p></div>
         <span class="admin-status-badge">${esc(data.publicStatus || "公開中")}</span>
       </div>
       ${thumb ? `<a class="admin-thumbnail" href="${esc(data.videoUrl)}" target="_blank" rel="noopener noreferrer"><img src="${esc(thumb)}" alt="${esc(data.activityName)}のおすすめ動画サムネイル"></a>` : ""}
@@ -314,6 +317,7 @@ function inputField(label, name, value, type = "text") {
   if (type === "textarea") return `<label>${esc(label)}<textarea name="${esc(name)}" rows="5" maxlength="800">${esc(value || "")}</textarea></label>`;
   if (type === "select") return `<label>${esc(label)}<select name="${esc(name)}"><option value="公開中" ${value === "公開中" ? "selected" : ""}>公開中</option><option value="非公開" ${value === "非公開" ? "selected" : ""}>非公開</option></select></label>`;
   if (type === "profileStatus") return `<label>${esc(label)}<select name="${esc(name)}"><option value="公開" ${value === "公開" ? "selected" : ""}>公開</option><option value="非公開" ${value === "非公開" ? "selected" : ""}>非公開</option></select></label>`;
+  if (type === "genreSelect") return `<label>${esc(label)}<select name="${esc(name)}">${VIDEO_GENRES.map((genre) => `<option value="${esc(genre)}" ${genre === (value || "その他") ? "selected" : ""}>${esc(genre)}</option>`).join("")}</select></label>`;
   return `<label>${esc(label)}<input name="${esc(name)}" type="${esc(type)}" value="${esc(value || "")}"></label>`;
 }
 
@@ -334,6 +338,7 @@ function openEditDialog(type, item) {
   } else {
     $("adminEditTitle").textContent = "公開おすすめを編集";
     $("adminEditFields").innerHTML = [
+      inputField("動画ジャンル", "genre", data.genre || "その他", "genreSelect"),
       inputField("おすすめ動画リンク", "videoUrl", data.videoUrl, "url"),
       inputField("おすすめポイント", "recommendationPoint", data.recommendationPoint, "textarea"),
       inputField("公開状態", "publicStatus", data.publicStatus || "公開中", "select")

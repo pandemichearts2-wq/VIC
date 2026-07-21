@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>おすすめ登録 | VIC</title>
   <meta name="description" content="VICへVTuberとおすすめ動画を登録するページ">
-  <link rel="stylesheet" href="styles.css?v=20260721-vic-admin1">
+  <link rel="stylesheet" href="styles.css?v=20260721-vic-genre10">
 </head>
 <body class="register-page">
   <header class="hero register-hero">
@@ -49,6 +49,27 @@
             <label>YouTubeチャンネルのリンク
               <input name="youtubeUrl" type="url" inputmode="url" placeholder="https://www.youtube.com/@..." required>
             </label>
+            <label>動画ジャンル
+              <select name="genre" required>
+                <option value="">選択してください</option>
+                <option value="雑談">雑談</option>
+                <option value="歌枠">歌枠</option>
+                <option value="ゲーム実況">ゲーム実況</option>
+                <option value="お絵描き">お絵描き</option>
+                <option value="ASMR">ASMR</option>
+                <option value="料理">料理</option>
+                <option value="開封">開封</option>
+                <option value="旅行・旅">旅行・旅</option>
+                <option value="作業">作業</option>
+                <option value="企画">企画</option>
+                <option value="耐久">耐久</option>
+                <option value="コラボ">コラボ</option>
+                <option value="案件">案件</option>
+                <option value="ニュース">ニュース</option>
+                <option value="読書・朗読">読書・朗読</option>
+                <option value="その他">その他</option>
+              </select>
+            </label>
             <label>おすすめ動画リンク
               <input name="recommendedVideoUrl" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=..." required>
             </label>
@@ -73,6 +94,27 @@
             <input id="additionActivityName" name="activityName" type="hidden">
           </div>
           <div class="form-grid addition-grid">
+            <label>動画ジャンル
+              <select name="genre" required>
+                <option value="">選択してください</option>
+                <option value="雑談">雑談</option>
+                <option value="歌枠">歌枠</option>
+                <option value="ゲーム実況">ゲーム実況</option>
+                <option value="お絵描き">お絵描き</option>
+                <option value="ASMR">ASMR</option>
+                <option value="料理">料理</option>
+                <option value="開封">開封</option>
+                <option value="旅行・旅">旅行・旅</option>
+                <option value="作業">作業</option>
+                <option value="企画">企画</option>
+                <option value="耐久">耐久</option>
+                <option value="コラボ">コラボ</option>
+                <option value="案件">案件</option>
+                <option value="ニュース">ニュース</option>
+                <option value="読書・朗読">読書・朗読</option>
+                <option value="その他">その他</option>
+              </select>
+            </label>
             <label>おすすめ動画リンク
               <input name="recommendedVideoUrl" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=..." required>
             </label>
@@ -93,6 +135,6 @@
   <button id="bgmToggle" class="floating-control bgm-toggle" type="button" aria-pressed="false">BGMを再生</button>
 
   <script src="config.js"></script>
-  <script src="register.js?v=20260721-vic-admin1"></script>
+  <script src="register.js?v=20260721-vic-genre10"></script>
 </body>
 </html>

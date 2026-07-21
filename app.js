@@ -1,5 +1,6 @@
 const API_URL = window.VIC_CONFIG?.API_URL || "";
 const $ = (id) => document.getElementById(id);
+const DISPLAY_LIMIT = 10;
 
 function safeHttpsUrl(value) {
   try {
@@ -10,96 +11,101 @@ function safeHttpsUrl(value) {
   }
 }
 
-function japanDateKey() {
-  const parts = new Intl.DateTimeFormat("en", {
-    timeZone: "Asia/Tokyo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).formatToParts(new Date());
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${values.year}-${values.month}-${values.day}`;
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[char]);
 }
 
-function formatJapanDate() {
-  return new Intl.DateTimeFormat("ja-JP", {
-    timeZone: "Asia/Tokyo",
-    month: "long",
-    day: "numeric",
-    weekday: "short"
-  }).format(new Date());
-}
-
-async function requestDailyRecommendation() {
+async function requestRecommendations(genre = "") {
   if (!API_URL) throw new Error("API URLが設定されていません。");
   const url = new URL(API_URL);
-  url.searchParams.set("action", "dailyRecommendation");
-  url.searchParams.set("date", japanDateKey());
-  url.searchParams.set("nonce", String(Date.now()));
+  url.searchParams.set("action", "recommendations");
+  url.searchParams.set("genre", genre);
+  url.searchParams.set("limit", String(DISPLAY_LIMIT));
+  url.searchParams.set("nonce", `${Date.now()}-${Math.random()}`);
   const response = await fetch(url.toString(), { method: "GET", cache: "no-store" });
   if (!response.ok) throw new Error(`おすすめを取得できませんでした（${response.status}）`);
   const data = await response.json();
   if (!data.ok) throw new Error(data.message || "おすすめを取得できませんでした。");
-  return data.recommendation || null;
+  return Array.isArray(data.recommendations) ? data.recommendations.slice(0, DISPLAY_LIMIT) : [];
 }
 
-function renderRecommendation(item) {
-  const root = $("dailyRecommendation");
-  const status = $("dailyRecommendationStatus");
-  if (!root) return;
-
-  if (!item) {
-    root.hidden = false;
-    $("dailyRecommendationLink").hidden = true;
-    status.textContent = "公開中のおすすめはまだありません。";
-    $("dailyRecommendationDate").textContent = formatJapanDate();
-    return;
-  }
-
+function recommendationCard(item, index) {
   const videoUrl = safeHttpsUrl(item.videoUrl);
+  if (!videoUrl) return "";
   const thumbnailUrl = safeHttpsUrl(item.thumbnailUrl);
-  if (!videoUrl) throw new Error("おすすめ動画のリンクを表示できませんでした。");
+  const activityName = item.activityName || "活動名未設定";
+  const meta = [item.reading, item.affiliation].filter(Boolean).join(" / ") || "登録VTuber";
+  const point = item.recommendationPoint || "";
+  const genre = item.genre || "その他";
+  const media = thumbnailUrl ? `
+    <span class="daily-recommendation-media" aria-hidden="true">
+      <img src="${esc(thumbnailUrl)}" alt="" loading="${index < 2 ? "eager" : "lazy"}" decoding="async">
+      <span class="daily-recommendation-play">▶</span>
+    </span>` : "";
 
-  $("dailyRecommendationName").textContent = item.activityName || "活動名未設定";
-  $("dailyRecommendationMeta").textContent = [item.reading, item.affiliation].filter(Boolean).join(" / ") || "登録VTuber";
-  $("dailyRecommendationPoint").textContent = item.recommendationPoint || "";
-  $("dailyRecommendationDate").textContent = formatJapanDate();
-  $("dailyRecommendationDate").setAttribute("datetime", japanDateKey());
-
-  const link = $("dailyRecommendationLink");
-  link.href = videoUrl;
-  link.hidden = false;
-  link.setAttribute("aria-label", `本日のおすすめVTuber、${item.activityName || "VTuber"}のおすすめ動画を見る`);
-
-  const thumbnail = $("dailyRecommendationThumbnail");
-  if (thumbnailUrl) {
-    thumbnail.src = thumbnailUrl;
-    thumbnail.alt = `${item.activityName || "VTuber"}のおすすめ動画サムネイル`;
-    thumbnail.parentElement.hidden = false;
-  } else {
-    thumbnail.removeAttribute("src");
-    thumbnail.alt = "";
-    thumbnail.parentElement.hidden = true;
-  }
-
-  status.textContent = "";
-  root.hidden = false;
+  return `
+    <a class="daily-recommendation-card" href="${esc(videoUrl)}" target="_blank" rel="noopener noreferrer"
+       aria-label="${esc(activityName)}の${esc(genre)}おすすめ動画を見る">
+      <span class="daily-recommendation-seal" aria-hidden="true"><span>VIC</span></span>
+      <span class="daily-recommendation-copy">
+        <span class="daily-recommendation-kicker">VIC Recommendation ${String(index + 1).padStart(2, "0")}</span>
+        <span class="recommendation-genre">${esc(genre)}</span>
+        <strong>${esc(activityName)}</strong>
+        <span class="daily-recommendation-meta">${esc(meta)}</span>
+        <span class="daily-recommendation-point">${esc(point)}</span>
+        <span class="daily-recommendation-action">おすすめ動画を見る</span>
+      </span>
+      ${media}
+    </a>`;
 }
 
-async function setupDailyRecommendation() {
+function renderRecommendations(items, genre) {
+  const list = $("recommendationList");
+  const status = $("recommendationStatus");
+  if (!list || !status) return;
+
+  const cards = (Array.isArray(items) ? items : [])
+    .slice(0, DISPLAY_LIMIT)
+    .map(recommendationCard)
+    .filter(Boolean)
+    .join("");
+
+  if (!cards) {
+    list.innerHTML = "";
+    status.textContent = genre
+      ? `「${genre}」で公開中のおすすめはまだありません。`
+      : "公開中のおすすめはまだありません。";
+  } else {
+    list.innerHTML = cards;
+    status.textContent = `${genre || "すべてのジャンル"}から${items.length}件をランダム表示しています。`;
+  }
+}
+
+async function loadRecommendations() {
+  const genre = $("recommendationGenre")?.value || "";
+  const list = $("recommendationList");
+  const status = $("recommendationStatus");
+  const button = $("recommendationShuffle");
+  if (list) list.innerHTML = '<p class="status-message">おすすめを選んでいます。</p>';
+  if (status) status.textContent = "";
+  if (button) button.disabled = true;
   try {
-    renderRecommendation(await requestDailyRecommendation());
+    renderRecommendations(await requestRecommendations(genre), genre);
   } catch (error) {
     console.error(error);
-    const root = $("dailyRecommendation");
-    if (root) root.hidden = false;
-    const link = $("dailyRecommendationLink");
-    if (link) link.hidden = true;
-    const status = $("dailyRecommendationStatus");
+    if (list) list.innerHTML = "";
     if (status) status.textContent = error.message || "おすすめを読み込めませんでした。";
-    const date = $("dailyRecommendationDate");
-    if (date) date.textContent = formatJapanDate();
+  } finally {
+    if (button) button.disabled = false;
   }
+}
+
+function setupRecommendationControls() {
+  $("recommendationGenre")?.addEventListener("change", loadRecommendations);
+  $("recommendationShuffle")?.addEventListener("click", loadRecommendations);
+  loadRecommendations();
 }
 
 function setupBgm() {
@@ -147,5 +153,5 @@ function setupBgm() {
   sync();
 }
 
-setupDailyRecommendation();
+setupRecommendationControls();
 setupBgm();
