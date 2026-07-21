@@ -114,7 +114,8 @@ function setupBgm() {
   if (!audio || !toggle) return;
 
   audio.volume = 0.28;
-  let enabled = localStorage.getItem("vicBgmEnabled") === "true";
+  // 初回はBGM再生を既定にする。利用者が明示的に停止した場合だけ次回も停止する。
+  let enabled = localStorage.getItem("vicBgmEnabled") !== "false";
 
   const sync = () => {
     const playing = !audio.paused;
@@ -128,7 +129,7 @@ function setupBgm() {
       enabled = true;
       localStorage.setItem("vicBgmEnabled", "true");
     } catch (_) {
-      enabled = false;
+      // 音声付き自動再生を禁止するブラウザでは、最初の操作時に再試行する。
     }
     sync();
   };
@@ -151,6 +152,7 @@ function setupBgm() {
   audio.addEventListener("play", sync);
   audio.addEventListener("pause", sync);
   sync();
+  if (enabled) play();
 }
 
 setupRecommendationControls();
