@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>VIC 管理画面</title>
+  <meta name="description" content="VIC管理者専用ページ">
+  <link rel="stylesheet" href="styles.css?v=20260721-vic-admin1">
+</head>
+<body class="admin-page">
+  <header class="admin-hero">
+    <div class="wrap">
+      <p class="eyebrow">Private Management</p>
+      <h1>VIC<br><span>Management</span></h1>
+      <p>VTuber Introduction Center 管理者専用</p>
+    </div>
+  </header>
+
+  <main class="wrap admin-main">
+    <section id="adminLogin" class="admin-login-card">
+      <p class="eyebrow">Administrator Login</p>
+      <h2>管理画面へログイン</h2>
+      <p>スプレッドシートのVICメニューで設定した管理パスワードを入力してください。</p>
+      <form id="adminLoginForm" class="admin-login-form">
+        <label for="adminPassword">管理パスワード</label>
+        <input id="adminPassword" type="password" autocomplete="current-password" minlength="8" required>
+        <button class="admin-button primary" type="submit">ログイン</button>
+        <p id="adminLoginMessage" class="admin-status" role="status"></p>
+      </form>
+    </section>
+
+    <section id="adminShell" class="admin-shell" hidden>
+      <div class="admin-topbar">
+        <div>
+          <p class="eyebrow">Administration</p>
+          <h2>管理メニュー</h2>
+        </div>
+        <button id="adminLogout" class="admin-button secondary" type="button">ログアウト</button>
+      </div>
+
+      <nav class="admin-tabs" aria-label="管理項目">
+        <button class="admin-tab active" type="button" data-admin-tab="submissions">申請管理</button>
+        <button class="admin-tab" type="button" data-admin-tab="profiles">公開VTuber</button>
+        <button class="admin-tab" type="button" data-admin-tab="recommendations">公開おすすめ</button>
+      </nav>
+
+      <section id="adminPanelSubmissions" class="admin-panel">
+        <div class="admin-toolbar admin-toolbar-submissions">
+          <input id="submissionQuery" type="search" placeholder="活動名・申請IDで検索">
+          <select id="submissionType">
+            <option value="">すべての種類</option>
+            <option value="initial">初回登録</option>
+            <option value="recommendation">おすすめ追加</option>
+          </select>
+          <select id="submissionStatus">
+            <option value="確認待ち">確認待ち</option>
+            <option value="">すべての状態</option>
+            <option value="許可（掲載）">許可（掲載）</option>
+            <option value="非許可（掲載不可）">非許可（掲載不可）</option>
+          </select>
+          <button id="submissionSearch" class="admin-button primary" type="button">検索</button>
+        </div>
+        <div id="submissionList" class="admin-list"></div>
+        <button id="submissionMore" class="admin-button secondary admin-more" type="button" hidden>さらに表示</button>
+      </section>
+
+      <section id="adminPanelProfiles" class="admin-panel" hidden>
+        <div class="admin-toolbar">
+          <input id="profileAdminQuery" type="search" placeholder="活動名・よみかた・個人／企業名で検索">
+          <button id="profileAdminSearch" class="admin-button primary" type="button">検索</button>
+        </div>
+        <div id="profileAdminList" class="admin-list"></div>
+        <button id="profileAdminMore" class="admin-button secondary admin-more" type="button" hidden>さらに表示</button>
+      </section>
+
+      <section id="adminPanelRecommendations" class="admin-panel" hidden>
+        <div class="admin-toolbar">
+          <input id="recommendationAdminQuery" type="search" placeholder="活動名・おすすめポイントで検索">
+          <button id="recommendationAdminSearch" class="admin-button primary" type="button">検索</button>
+        </div>
+        <div id="recommendationAdminList" class="admin-list"></div>
+        <button id="recommendationAdminMore" class="admin-button secondary admin-more" type="button" hidden>さらに表示</button>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="adminEditDialog" class="admin-dialog">
+    <form id="adminEditForm" method="dialog">
+      <div class="admin-dialog-head">
+        <div>
+          <p class="eyebrow">Edit Content</p>
+          <h2 id="adminEditTitle">登録内容を編集</h2>
+        </div>
+        <button id="adminEditClose" class="admin-dialog-close" type="button" aria-label="閉じる">×</button>
+      </div>
+      <div id="adminEditFields" class="admin-edit-fields"></div>
+      <div class="admin-dialog-actions">
+        <button id="adminEditCancel" class="admin-button secondary" type="button">やめる</button>
+        <button id="adminEditSave" class="admin-button primary" type="submit">更新する</button>
+      </div>
+      <p id="adminEditMessage" class="admin-status" role="status"></p>
+    </form>
+  </dialog>
+
+  <footer><div class="wrap">VIC - VTuber Introduction Center -</div></footer>
+  <script src="config.js"></script>
+  <script src="admin.js?v=20260721-vic-admin1"></script>
+</body>
+</html>
