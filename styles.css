@@ -294,6 +294,34 @@ body::before{
 }
 .status-message{min-height:1.5em;margin:10px 8px 0;color:var(--muted);font-size:13px}
 
+/* ===== VIC site statement between hero and community recommendation ===== */
+.home .site-introduction{
+  max-width:860px;
+  margin:clamp(58px,8vw,104px) 0 clamp(34px,5vw,64px);
+  padding:24px 0 24px 28px;
+  border-left:2px solid rgba(189,139,67,.72);
+}
+.home .site-introduction p{
+  margin:0;
+  color:#6b4a3b;
+  font-size:clamp(15px,1.45vw,18px);
+  line-height:2.05;
+  letter-spacing:.035em;
+  text-wrap:pretty;
+}
+.home .site-introduction p + p{margin-top:12px}
+@media(max-width:720px){
+  .home .site-introduction{
+    margin:42px 0 28px;
+    padding:18px 0 18px 20px;
+  }
+  .home .site-introduction p{
+    font-size:14px;
+    line-height:1.95;
+  }
+  .home .site-introduction p + p{margin-top:9px}
+}
+
 .home-intro{
   display:grid;
   grid-template-columns:minmax(180px,.7fr) minmax(0,1.65fr);

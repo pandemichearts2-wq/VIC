@@ -21,3 +21,7 @@
 `AppsScript-Code.gs` の内容で現在のVIC Apps Scriptをすべて置き換え、保存後に新バージョンとして再デプロイしてください。
 
 `setupSheets` の再実行は不要です。
+
+
+## 今回の変更
+- トップページのヒーローとCommunity Recommendationの間に、サイト運営趣旨の3段落を追加。

@@ -30,7 +30,7 @@ function setupSheets() {
 
   ensureSheet_(ss, SHEETS.PROFILES, [
     'profileId', 'activityName', 'reading', 'affiliation', 'xUrl', 'youtubeUrl',
-    'status', 'createdAt', 'updatedAt'
+    'otherLink1', 'otherLink2', 'otherLink3', 'status', 'createdAt', 'updatedAt'
   ]);
   ensureSheet_(ss, SHEETS.RECOMMENDATIONS, [
     'recommendationId', 'profileId', 'activityName', 'videoUrl', 'thumbnailUrl', 'genre',
@@ -92,11 +92,14 @@ function doPost(e) {
     if (p.action === 'adminLogin') return json_(adminLogin_(p));
     if (/^admin/.test(String(p.action || ''))) {
       requireAdmin_(p);
+      if (p.action === 'adminNotificationCounts') return json_(adminNotificationCounts_());
       if (p.action === 'adminListSubmissions') return json_(adminListSubmissions_(p));
       if (p.action === 'adminDecideSubmission') return json_(adminDecideSubmission_(p));
+      if (p.action === 'adminBulkSubmissions') return json_(adminBulkSubmissions_(p));
       if (p.action === 'adminListFeedback') return json_(adminListFeedback_(p));
       if (p.action === 'adminUpdateFeedback') return json_(adminUpdateFeedback_(p));
       if (p.action === 'adminListProfiles') return json_(adminListProfiles_(p));
+      if (p.action === 'adminListProfileRecommendations') return json_(adminListProfileRecommendations_(p));
       if (p.action === 'adminListRecommendations') return json_(adminListRecommendations_(p));
       if (p.action === 'adminUpdateProfile') return json_(adminUpdateProfile_(p));
       if (p.action === 'adminDeleteProfile') return json_(adminDeleteProfile_(p));
@@ -117,16 +120,27 @@ function validateInitial_(p) {
     affiliation: text_(p.affiliation),
     xUrl: text_(p.xUrl),
     youtubeUrl: text_(p.youtubeUrl),
+    otherLink1: text_(p.otherLink1),
+    otherLink2: text_(p.otherLink2),
+    otherLink3: text_(p.otherLink3),
     genre: text_(p.genre),
     recommendedVideoUrl: text_(p.recommendedVideoUrl),
     recommendationPoint: text_(p.recommendationPoint)
   };
 
-  if (Object.values(values).some(value => !value)) throw Error('すべての項目を入力してください。');
-  requireHttps_(values.xUrl, 'X（旧Twitter）のリンク');
-  requireHttps_(values.youtubeUrl, 'YouTubeチャンネルのリンク');
-  requireVideoGenre_(values.genre);
-  requireYouTubeVideo_(values.recommendedVideoUrl);
+  if (!values.activityName) throw Error('活動名を入力してください。');
+  [
+    ['X（旧Twitter）のリンク', values.xUrl],
+    ['YouTubeチャンネルのリンク', values.youtubeUrl],
+    ['その他リンク1', values.otherLink1],
+    ['その他リンク2', values.otherLink2],
+    ['その他リンク3', values.otherLink3]
+  ].forEach(([label, value]) => { if (value) requireHttps_(value, label); });
+  if (values.genre) requireVideoGenre_(values.genre);
+  if (values.recommendedVideoUrl) {
+    requireYouTubeVideo_(values.recommendedVideoUrl);
+    ensureVideoNotSubmitted_(values.recommendedVideoUrl);
+  }
   if (values.recommendationPoint.length > 800) throw Error('おすすめポイントは800文字以内で入力してください。');
 
   const normalizedName = normalize_(values.activityName);
@@ -136,7 +150,6 @@ function validateInitial_(p) {
   if (pendingSubmissions_().some(item => item.submissionType === 'initial' && normalize_(item.activityName) === normalizedName)) {
     throw Error('このVTuberの初回登録はすでに確認待ちです。');
   }
-  ensureVideoNotSubmitted_(values.recommendedVideoUrl);
 }
 
 function validateRecommendationAddition_(p) {
@@ -166,7 +179,7 @@ function ensureVideoNotSubmitted_(videoUrl) {
     const payload = parseJson_(item.payloadJson);
     return normalizeVideoUrl_(payload.recommendedVideoUrl) === normalizedUrl;
   });
-  if (published || pending) throw Error('このおすすめ動画はすでに登録済み、または確認待ちです。');
+  if (published || pending) throw Error('既に登録済みの動画です');
 }
 
 
@@ -210,6 +223,9 @@ function saveSubmission_(type, p) {
     affiliation: cleanText_(p.affiliation, 120),
     xUrl: text_(p.xUrl),
     youtubeUrl: text_(p.youtubeUrl),
+    otherLink1: text_(p.otherLink1),
+    otherLink2: text_(p.otherLink2),
+    otherLink3: text_(p.otherLink3),
     genre: text_(p.genre),
     recommendedVideoUrl: text_(p.recommendedVideoUrl),
     recommendationPoint: cleanText_(p.recommendationPoint, 800)
@@ -329,6 +345,22 @@ function adminPageResult_(items, offset, limit) {
   return { ok: true, items: page, hasMore: offset + page.length < items.length, nextOffset: offset + page.length };
 }
 
+function adminNotificationCounts_() {
+  const submissions = rows_(SHEETS.SUBMISSIONS).filter(item => String(item.status || '') === '確認待ち').length;
+  const feedbackRows = rows_(SHEETS.FEEDBACK);
+  const feedbackUnconfirmed = feedbackRows.filter(item => String(item.status || '未確認') === '未確認').length;
+  const feedbackInProgress = feedbackRows.filter(item => String(item.status || '') === '対応中').length;
+  return {
+    ok: true,
+    submissions: submissions,
+    feedback: feedbackUnconfirmed + feedbackInProgress,
+    breakdown: {
+      feedbackUnconfirmed: feedbackUnconfirmed,
+      feedbackInProgress: feedbackInProgress
+    }
+  };
+}
+
 function adminListSubmissions_(p) {
   const q = normalize_(p.q);
   const type = text_(p.type);
@@ -355,28 +387,71 @@ function adminListSubmissions_(p) {
   return adminPageResult_(items, offset, limit);
 }
 
+function adminProcessSubmissionUnlocked_(submissionId, decision, reviewNote) {
+  const found = findRowById_(SHEETS.SUBMISSIONS, 'submissionId', submissionId);
+  if (!found) throw Error('申請が見つかりません。');
+  if (String(found.data.status) !== '確認待ち') throw Error('この申請はすでに処理されています。');
+  const note = cleanText_(reviewNote || '', 500);
+  if (decision === 'approve') {
+    const publishedId = publishSubmission_(found.data);
+    updateObjectRow_(SHEETS.SUBMISSIONS, found.row, {
+      status: '許可（掲載）', reviewNote: note, publishedId: publishedId, publishedAt: new Date()
+    });
+  } else if (decision === 'reject') {
+    updateObjectRow_(SHEETS.SUBMISSIONS, found.row, {
+      status: '非許可（掲載不可）', reviewNote: note
+    });
+  } else {
+    throw Error('処理内容が不正です。');
+  }
+  return { submissionType: String(found.data.submissionType || '') };
+}
+
+function adminDeleteSubmissionUnlocked_(submissionId) {
+  const found = findRowById_(SHEETS.SUBMISSIONS, 'submissionId', submissionId);
+  if (!found) throw Error('申請が見つかりません。');
+  sheet_(SHEETS.SUBMISSIONS).deleteRow(found.row);
+  return { submissionType: String(found.data.submissionType || '') };
+}
+
 function adminDecideSubmission_(p) {
   const decision = String(p.decision || '');
   if (!['approve', 'reject'].includes(decision)) throw Error('処理内容が不正です。');
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
-    const found = findRowById_(SHEETS.SUBMISSIONS, 'submissionId', p.submissionId);
-    if (!found) throw Error('申請が見つかりません。');
-    if (String(found.data.status) !== '確認待ち') throw Error('この申請はすでに処理されています。');
-    const reviewNote = cleanText_(p.reviewNote || '', 500);
-    if (decision === 'approve') {
-      const publishedId = publishSubmission_(found.data);
-      updateObjectRow_(SHEETS.SUBMISSIONS, found.row, {
-        status: '許可（掲載）', reviewNote: reviewNote, publishedId: publishedId, publishedAt: new Date()
-      });
-    } else {
-      updateObjectRow_(SHEETS.SUBMISSIONS, found.row, {
-        status: '非許可（掲載不可）', reviewNote: reviewNote
-      });
-    }
+    const result = adminProcessSubmissionUnlocked_(String(p.submissionId || ''), decision, p.reviewNote || '');
     SpreadsheetApp.flush();
-    return { ok: true };
+    return { ok: true, result: result };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function adminBulkSubmissions_(p) {
+  const operation = String(p.operation || '');
+  if (!['approve', 'delete'].includes(operation)) throw Error('一括処理の内容が不正です。');
+  const ids = [...new Set((Array.isArray(p.submissionIds) ? p.submissionIds : [])
+    .map(value => String(value || '').trim()).filter(Boolean))];
+  if (!ids.length) throw Error('処理する申請を選択してください。');
+  if (ids.length > 200) throw Error('一度に処理できる申請は200件までです。');
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  const errors = [];
+  let success = 0;
+  try {
+    ids.forEach(submissionId => {
+      try {
+        if (operation === 'approve') adminProcessSubmissionUnlocked_(submissionId, 'approve', '');
+        else adminDeleteSubmissionUnlocked_(submissionId);
+        success++;
+      } catch (error) {
+        errors.push({ submissionId: submissionId, message: String(error && error.message || error) });
+      }
+    });
+    SpreadsheetApp.flush();
+    return { ok: true, total: ids.length, success: success, failed: errors.length, errors: errors };
   } finally {
     lock.releaseLock();
   }
@@ -424,12 +499,45 @@ function adminListProfiles_(p) {
   const q = normalize_(p.q);
   const offset = readOffset_(p.offset);
   const limit = readLimit_(p.limit, 30);
+  const recommendations = rows_(SHEETS.RECOMMENDATIONS);
+  const recommendationsByProfile = {};
+  recommendations.forEach(item => {
+    const profileId = String(item.profileId || '');
+    if (!recommendationsByProfile[profileId]) recommendationsByProfile[profileId] = [];
+    recommendationsByProfile[profileId].push(item);
+  });
+
   let items = rows_(SHEETS.PROFILES);
-  if (q) items = items.filter(item => normalize_([
-    item.profileId, item.activityName, item.reading, item.affiliation, item.xUrl, item.youtubeUrl
-  ].join(' ')).includes(q));
+  if (q) items = items.filter(item => {
+    const profileText = normalize_([
+      item.profileId, item.activityName, item.reading, item.affiliation, item.xUrl, item.youtubeUrl,
+      item.otherLink1, item.otherLink2, item.otherLink3
+    ].join(' '));
+    const recommendationText = normalize_((recommendationsByProfile[String(item.profileId || '')] || []).map(rec => [
+      rec.recommendationId, rec.activityName, rec.genre, rec.videoUrl, rec.recommendationPoint, rec.publicStatus
+    ].join(' ')).join(' '));
+    return profileText.includes(q) || recommendationText.includes(q);
+  });
   items.sort((a, b) => String(a.activityName || '').localeCompare(String(b.activityName || ''), 'ja'));
-  return adminPageResult_(items.map(item => ({ id: item.profileId, data: item })), offset, limit);
+  return adminPageResult_(items.map(item => ({
+    id: item.profileId,
+    data: item,
+    recommendationCount: (recommendationsByProfile[String(item.profileId || '')] || []).length
+  })), offset, limit);
+}
+
+function adminListProfileRecommendations_(p) {
+  const profileId = text_(p.profileId);
+  if (!profileId) throw Error('VTuberが指定されていません。');
+  const profile = findRowById_(SHEETS.PROFILES, 'profileId', profileId);
+  if (!profile) throw Error('VTuberが見つかりません。');
+  const items = rows_(SHEETS.RECOMMENDATIONS)
+    .filter(item => String(item.profileId || '') === String(profileId))
+    .sort((a, b) => dateNumber_(b.approvedAt) - dateNumber_(a.approvedAt));
+  return {
+    ok: true,
+    items: items.map(item => ({ id: item.recommendationId, data: item }))
+  };
 }
 
 function adminListRecommendations_(p) {
@@ -453,10 +561,18 @@ function adminUpdateProfile_(p) {
   const affiliation = cleanText_(input.affiliation, 120);
   const xUrl = text_(input.xUrl);
   const youtubeUrl = text_(input.youtubeUrl);
+  const otherLink1 = text_(input.otherLink1);
+  const otherLink2 = text_(input.otherLink2);
+  const otherLink3 = text_(input.otherLink3);
   const status = String(input.status || '公開') === '非公開' ? '非公開' : '公開';
-  if (!activityName || !reading || !affiliation || !xUrl || !youtubeUrl) throw Error('すべての項目を入力してください。');
-  requireHttps_(xUrl, 'X（旧Twitter）のリンク');
-  requireHttps_(youtubeUrl, 'YouTubeチャンネルのリンク');
+  if (!activityName) throw Error('活動名を入力してください。');
+  [
+    ['X（旧Twitter）のリンク', xUrl],
+    ['YouTubeチャンネルのリンク', youtubeUrl],
+    ['その他リンク1', otherLink1],
+    ['その他リンク2', otherLink2],
+    ['その他リンク3', otherLink3]
+  ].forEach(([label, value]) => { if (value) requireHttps_(value, label); });
   const duplicate = rows_(SHEETS.PROFILES).find(item =>
     String(item.profileId) !== String(found.data.profileId) && normalize_(item.activityName) === normalize_(activityName)
   );
@@ -464,7 +580,8 @@ function adminUpdateProfile_(p) {
   const oldName = String(found.data.activityName || '');
   updateObjectRow_(SHEETS.PROFILES, found.row, {
     activityName: activityName, reading: reading, affiliation: affiliation,
-    xUrl: xUrl, youtubeUrl: youtubeUrl, status: status, updatedAt: new Date()
+    xUrl: xUrl, youtubeUrl: youtubeUrl, otherLink1: otherLink1, otherLink2: otherLink2,
+    otherLink3: otherLink3, status: status, updatedAt: new Date()
   });
   if (activityName !== oldName) {
     rowsWithNumber_(SHEETS.RECOMMENDATIONS)
@@ -522,6 +639,7 @@ function publishSubmission_(submission) {
   const payload = parseJson_(submission.payloadJson);
   if (String(submission.submissionType) === 'initial') {
     const profileId = publishProfile_(payload);
+    if (!text_(payload.recommendedVideoUrl)) return profileId;
     return publishRecommendation_(profileId, payload.activityName, payload.recommendedVideoUrl, payload.recommendationPoint, payload.genre);
   }
   if (String(submission.submissionType) === 'recommendation') {
@@ -545,6 +663,9 @@ function publishProfile_(payload) {
     affiliation: payload.affiliation,
     xUrl: payload.xUrl,
     youtubeUrl: payload.youtubeUrl,
+    otherLink1: payload.otherLink1 || '',
+    otherLink2: payload.otherLink2 || '',
+    otherLink3: payload.otherLink3 || '',
     status: '公開',
     createdAt: now,
     updatedAt: now
