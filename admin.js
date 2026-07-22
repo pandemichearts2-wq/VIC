@@ -7,7 +7,6 @@ const state = {
   submissions: { offset: 0, hasMore: false, selected: new Set() },
   feedback: { offset: 0, hasMore: false },
   profiles: { offset: 0, hasMore: false },
-  recommendations: { offset: 0, hasMore: false },
   edit: null,
   notificationTimer: 0
 };
@@ -132,6 +131,8 @@ $("adminLoginForm").addEventListener("submit", async (event) => {
 
 $("adminLogout").addEventListener("click", logout);
 
+$("adminPageRefresh").addEventListener("click", () => window.location.reload());
+
 document.querySelectorAll(".admin-tab").forEach((button) => {
   button.addEventListener("click", () => {
     document.querySelectorAll(".admin-tab").forEach((item) => item.classList.toggle("active", item === button));
@@ -139,7 +140,6 @@ document.querySelectorAll(".admin-tab").forEach((button) => {
     $("adminPanelSubmissions").hidden = state.tab !== "submissions";
     $("adminPanelFeedback").hidden = state.tab !== "feedback";
     $("adminPanelProfiles").hidden = state.tab !== "profiles";
-    $("adminPanelRecommendations").hidden = state.tab !== "recommendations";
     loadActiveTab();
   });
 });
@@ -156,7 +156,6 @@ function loadActiveTab() {
   if (state.tab === "submissions") loadSubmissions(true);
   else if (state.tab === "feedback") loadFeedback(true);
   else if (state.tab === "profiles") loadProfiles(true);
-  else loadRecommendations(true);
 }
 
 function syncSubmissionBulkUi() {
@@ -389,8 +388,9 @@ async function loadFeedback(reset) {
 
 function profileCard(item) {
   const data = item.data || {};
+  const recommendationCount = Math.max(0, Number(item.recommendationCount) || 0);
   return `
-    <article class="admin-card admin-content-card">
+    <article class="admin-card admin-content-card" data-profile-card="${esc(item.id)}">
       <div class="admin-card-head">
         <div><span class="admin-badge">VTuber</span><h3>${esc(data.activityName)}</h3><p>${esc([data.reading, data.affiliation].filter(Boolean).join(" / "))}</p></div>
         <span class="admin-status-badge">${esc(data.status || "公開")}</span>
@@ -402,9 +402,18 @@ function profileCard(item) {
         <div><dt>その他リンク2</dt><dd>${safeUrl(data.otherLink2) ? `<a href="${esc(data.otherLink2)}" target="_blank" rel="noopener noreferrer">リンクを開く</a>` : "未登録"}</dd></div>
         <div><dt>その他リンク3</dt><dd>${safeUrl(data.otherLink3) ? `<a href="${esc(data.otherLink3)}" target="_blank" rel="noopener noreferrer">リンクを開く</a>` : "未登録"}</dd></div>
       </dl>
+      <details class="admin-profile-recommendations">
+        <summary>
+          <span>おすすめ動画</span>
+          <strong data-recommendation-count>${recommendationCount}件</strong>
+        </summary>
+        <div class="admin-profile-recommendation-list" data-profile-recommendation-list>
+          ${recommendationCount ? '<div class="admin-recommendation-loading">開くとおすすめ動画を読み込みます。</div>' : '<div class="admin-recommendation-empty">登録されているおすすめ動画はありません。</div>'}
+        </div>
+      </details>
       <div class="admin-card-actions">
-        <button class="admin-button primary" type="button" data-edit>編集</button>
-        <button class="admin-button danger" type="button" data-delete>削除</button>
+        <button class="admin-button primary" type="button" data-edit-profile>VTuber情報を編集</button>
+        <button class="admin-button danger" type="button" data-delete-profile>VTuberを削除</button>
       </div>
     </article>`;
 }
@@ -412,35 +421,83 @@ function profileCard(item) {
 function recommendationCard(item) {
   const data = item.data || {};
   const thumb = safeUrl(data.thumbnailUrl);
+  const videoUrl = safeUrl(data.videoUrl);
   return `
-    <article class="admin-card admin-content-card">
-      <div class="admin-card-head">
-        <div><span class="admin-badge">おすすめ動画</span><h3>${esc(data.activityName)}</h3><p>${esc(data.genre || "その他")} / ${esc(fmtDate(data.approvedAt))}</p></div>
+    <article class="admin-recommendation-item">
+      <div class="admin-recommendation-item-head">
+        <div>
+          <span class="admin-badge">${esc(data.genre || "その他")}</span>
+          <p>${esc(fmtDate(data.approvedAt))}</p>
+        </div>
         <span class="admin-status-badge">${esc(data.publicStatus || "公開中")}</span>
       </div>
-      ${thumb ? `<a class="admin-thumbnail" href="${esc(data.videoUrl)}" target="_blank" rel="noopener noreferrer"><img src="${esc(thumb)}" alt="${esc(data.activityName)}のおすすめ動画サムネイル"></a>` : ""}
-      <div class="admin-point"><strong>おすすめポイント</strong><p>${esc(data.recommendationPoint || "").replace(/\r?\n/g, "<br>")}</p></div>
-      <div class="admin-card-actions">
-        <button class="admin-button primary" type="button" data-edit>編集</button>
-        <button class="admin-button danger" type="button" data-delete>削除</button>
+      <div class="admin-recommendation-item-body">
+        ${thumb && videoUrl ? `<a class="admin-recommendation-thumbnail" href="${esc(videoUrl)}" target="_blank" rel="noopener noreferrer"><img src="${esc(thumb)}" alt="${esc(data.activityName)}のおすすめ動画サムネイル"></a>` : ""}
+        <div class="admin-recommendation-copy">
+          <div class="admin-point"><strong>おすすめポイント</strong><p>${esc(data.recommendationPoint || "").replace(/\r?\n/g, "<br>")}</p></div>
+          ${videoUrl ? `<a class="admin-video-link" href="${esc(videoUrl)}" target="_blank" rel="noopener noreferrer">YouTubeで動画を開く ↗</a>` : ""}
+        </div>
+      </div>
+      <div class="admin-card-actions admin-recommendation-actions">
+        <button class="admin-button primary" type="button" data-edit-recommendation>おすすめを編集</button>
+        <button class="admin-button danger" type="button" data-delete-recommendation>おすすめを削除</button>
       </div>
     </article>`;
 }
 
-function bindContentActions(article, item, type) {
-  article.querySelector("[data-edit]").addEventListener("click", () => openEditDialog(type, item));
-  article.querySelector("[data-delete]").addEventListener("click", async () => {
-    const message = type === "profile"
-      ? `「${item.data.activityName}」を削除しますか？\n紐づくおすすめ動画もすべて削除されます。`
-      : `「${item.data.activityName}」のこのおすすめ動画を削除しますか？`;
-    if (!window.confirm(message)) return;
+async function loadProfileRecommendations(details, profileId, force = false) {
+  const list = details.querySelector("[data-profile-recommendation-list]");
+  if (!list || (!force && details.dataset.loaded === "true")) return;
+  details.dataset.loaded = "loading";
+  list.innerHTML = '<div class="admin-recommendation-loading">読み込んでいます。</div>';
+  try {
+    const data = await api("adminListProfileRecommendations", { profileId });
+    const items = data.items || [];
+    list.innerHTML = "";
+    items.forEach((item) => {
+      const holder = document.createElement("div");
+      holder.innerHTML = recommendationCard(item);
+      const article = holder.firstElementChild;
+      bindRecommendationActions(article, item);
+      list.appendChild(article);
+    });
+    if (!items.length) list.innerHTML = '<div class="admin-recommendation-empty">登録されているおすすめ動画はありません。</div>';
+    const count = details.querySelector("[data-recommendation-count]");
+    if (count) count.textContent = `${items.length}件`;
+    details.dataset.loaded = "true";
+  } catch (error) {
+    details.dataset.loaded = "false";
+    list.innerHTML = `<div class="admin-recommendation-empty">${esc(error.message)}</div>`;
+  }
+}
+
+function bindRecommendationActions(article, item) {
+  article.querySelector("[data-edit-recommendation]").addEventListener("click", () => openEditDialog("recommendation", item));
+  article.querySelector("[data-delete-recommendation]").addEventListener("click", async () => {
+    if (!window.confirm(`「${item.data.activityName}」のこのおすすめ動画を削除しますか？`)) return;
     try {
-      await api(type === "profile" ? "adminDeleteProfile" : "adminDeleteRecommendation", { id: item.id });
-      if (type === "profile") await loadProfiles(true);
-      else await loadRecommendations(true);
+      await api("adminDeleteRecommendation", { id: item.id });
+      await loadProfiles(true);
     } catch (error) {
       window.alert(error.message);
     }
+  });
+}
+
+function bindProfileActions(article, item) {
+  article.querySelector("[data-edit-profile]").addEventListener("click", () => openEditDialog("profile", item));
+  article.querySelector("[data-delete-profile]").addEventListener("click", async () => {
+    if (!window.confirm(`「${item.data.activityName}」を削除しますか？\n紐づくおすすめ動画もすべて削除されます。`)) return;
+    try {
+      await api("adminDeleteProfile", { id: item.id });
+      await loadProfiles(true);
+    } catch (error) {
+      window.alert(error.message);
+    }
+  });
+  const details = article.querySelector(".admin-profile-recommendations");
+  details.addEventListener("toggle", () => {
+    if (details.open) loadProfileRecommendations(details, item.id);
   });
 }
 
@@ -461,40 +518,12 @@ async function loadProfiles(reset) {
       const holder = document.createElement("div");
       holder.innerHTML = profileCard(item);
       const article = holder.firstElementChild;
-      bindContentActions(article, item, "profile");
+      bindProfileActions(article, item);
       box.appendChild(article);
     });
     state.profiles.offset = data.nextOffset || 0;
     $("profileAdminMore").hidden = !data.hasMore;
     if (!box.children.length) box.innerHTML = '<div class="admin-empty">該当するVTuberはいません。</div>';
-  } catch (error) {
-    handleAdminError(error, box);
-  }
-}
-
-async function loadRecommendations(reset) {
-  const box = $("recommendationAdminList");
-  if (reset) {
-    state.recommendations.offset = 0;
-    box.innerHTML = '<div class="admin-empty">読み込んでいます。</div>';
-  }
-  try {
-    const data = await api("adminListRecommendations", {
-      q: $("recommendationAdminQuery").value,
-      offset: state.recommendations.offset,
-      limit: 30
-    });
-    if (reset) box.innerHTML = "";
-    (data.items || []).forEach((item) => {
-      const holder = document.createElement("div");
-      holder.innerHTML = recommendationCard(item);
-      const article = holder.firstElementChild;
-      bindContentActions(article, item, "recommendation");
-      box.appendChild(article);
-    });
-    state.recommendations.offset = data.nextOffset || 0;
-    $("recommendationAdminMore").hidden = !data.hasMore;
-    if (!box.children.length) box.innerHTML = '<div class="admin-empty">該当するおすすめ動画はありません。</div>';
   } catch (error) {
     handleAdminError(error, box);
   }
@@ -556,7 +585,7 @@ function openEditDialog(type, item) {
       inputField("公開状態", "status", data.status || "公開", "profileStatus")
     ].join("");
   } else {
-    $("adminEditTitle").textContent = "公開おすすめを編集";
+    $("adminEditTitle").textContent = "おすすめ動画を編集";
     $("adminEditFields").innerHTML = [
       inputField("動画ジャンル", "genre", data.genre || "その他", "genreSelect"),
       inputField("おすすめ動画リンク", "videoUrl", data.videoUrl, "url"),
@@ -594,7 +623,7 @@ $("adminEditForm").addEventListener("submit", async (event) => {
     } else {
       await api("adminUpdateRecommendation", { id: state.edit.item.id, data });
       closeEditDialog();
-      await loadRecommendations(true);
+      await loadProfiles(true);
     }
   } catch (error) {
     message.textContent = error.message;
@@ -614,17 +643,14 @@ $("feedbackAdminSearch").addEventListener("click", () => loadFeedback(true));
 $("feedbackAdminMore").addEventListener("click", () => loadFeedback(false));
 $("profileAdminSearch").addEventListener("click", () => loadProfiles(true));
 $("profileAdminMore").addEventListener("click", () => loadProfiles(false));
-$("recommendationAdminSearch").addEventListener("click", () => loadRecommendations(true));
-$("recommendationAdminMore").addEventListener("click", () => loadRecommendations(false));
 
-[$("submissionQuery"), $("feedbackAdminQuery"), $("profileAdminQuery"), $("recommendationAdminQuery")].forEach((input) => {
+[$("submissionQuery"), $("feedbackAdminQuery"), $("profileAdminQuery")].forEach((input) => {
   input.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
     if (input === $("submissionQuery")) loadSubmissions(true);
     else if (input === $("feedbackAdminQuery")) loadFeedback(true);
     else if (input === $("profileAdminQuery")) loadProfiles(true);
-    else loadRecommendations(true);
   });
 });
 

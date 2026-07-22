@@ -873,3 +873,115 @@ body.feedback-dialog-open{overflow:hidden}
 
 /* Keep top-right notification badges visible inside the horizontally scrollable tab bar. */
 .admin-tabs{padding-top:10px;padding-right:12px}
+
+
+/* ===== VIC public VTuber editor with integrated recommendations ===== */
+.admin-page-refresh{
+  flex:0 0 auto;
+  align-self:center;
+  min-width:82px;
+  padding:11px 20px;
+}
+.admin-profile-recommendations{
+  margin-top:18px;
+  overflow:hidden;
+  border:1px solid rgba(126,77,51,.16);
+  border-radius:17px;
+  background:rgba(255,250,242,.78);
+}
+.admin-profile-recommendations>summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:15px 17px;
+  color:#684536;
+  font-weight:900;
+  cursor:pointer;
+  list-style:none;
+  user-select:none;
+}
+.admin-profile-recommendations>summary::-webkit-details-marker{display:none}
+.admin-profile-recommendations>summary::after{
+  content:"＋";
+  flex:0 0 auto;
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  color:#87533d;
+  background:#fff5e8;
+  font-size:18px;
+  line-height:1;
+}
+.admin-profile-recommendations[open]>summary::after{content:"－"}
+.admin-profile-recommendations>summary strong{
+  margin-left:auto;
+  padding:4px 10px;
+  border-radius:999px;
+  color:#fff;
+  background:#b96642;
+  font-size:11px;
+  letter-spacing:.04em;
+}
+.admin-profile-recommendation-list{
+  display:grid;
+  gap:14px;
+  padding:0 15px 15px;
+  border-top:1px solid rgba(126,77,51,.11);
+}
+.admin-recommendation-loading,.admin-recommendation-empty{
+  margin-top:15px;
+  padding:22px;
+  text-align:center;
+  color:var(--muted);
+  border:1px dashed rgba(126,77,51,.20);
+  border-radius:14px;
+  background:rgba(255,255,255,.58);
+}
+.admin-recommendation-item{
+  margin-top:15px;
+  padding:17px;
+  border:1px solid rgba(126,77,51,.14);
+  border-radius:16px;
+  background:#fffdf9;
+  box-shadow:0 9px 24px rgba(103,60,38,.06);
+}
+.admin-recommendation-item-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:13px;
+}
+.admin-recommendation-item-head p{margin:7px 0 0;color:var(--muted);font-size:11px}
+.admin-recommendation-item-body{
+  display:grid;
+  grid-template-columns:minmax(180px,260px) minmax(0,1fr);
+  gap:16px;
+  align-items:start;
+}
+.admin-recommendation-thumbnail{
+  display:block;
+  overflow:hidden;
+  border-radius:13px;
+  box-shadow:0 8px 20px rgba(91,51,31,.12);
+}
+.admin-recommendation-thumbnail img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.admin-recommendation-copy .admin-point{margin:0}
+.admin-video-link{
+  display:inline-flex;
+  margin-top:11px;
+  color:#a55336;
+  font-size:12px;
+  font-weight:900;
+}
+.admin-recommendation-actions{margin-top:14px}
+
+@media(max-width:760px){
+  .admin-page-refresh{width:auto;min-width:76px}
+  .admin-profile-recommendations>summary{padding:14px 13px}
+  .admin-recommendation-item{padding:14px 12px}
+  .admin-recommendation-item-body{grid-template-columns:1fr}
+}

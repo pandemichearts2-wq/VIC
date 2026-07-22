@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow">
   <title>VIC 管理画面</title>
   <meta name="description" content="VIC管理者専用ページ">
-  <link rel="stylesheet" href="styles.css?v=20260722-vic-admin-bulk-badges1">
+  <link rel="stylesheet" href="styles.css?v=20260722-vic-public-edit2">
 </head>
 <body class="admin-page">
   <header class="admin-hero">
@@ -51,8 +51,8 @@
             <span id="feedbackInProgressBadge" class="admin-notification-badge admin-notification-badge-progress" aria-label="対応中のお問い合わせ件数" title="対応中" hidden><span class="admin-notification-mark" aria-hidden="true">中</span><span data-badge-count>0</span></span>
           </span>
         </button>
-        <button class="admin-tab" type="button" data-admin-tab="profiles"><span>公開VTuber</span></button>
-        <button class="admin-tab" type="button" data-admin-tab="recommendations"><span>公開おすすめ</span></button>
+        <button class="admin-tab" type="button" data-admin-tab="profiles"><span>公開VTuber編集</span></button>
+        <button id="adminPageRefresh" class="admin-button secondary admin-page-refresh" type="button" aria-label="管理画面を更新">更新</button>
       </nav>
 
       <section id="adminPanelSubmissions" class="admin-panel">
@@ -105,21 +105,13 @@
 
       <section id="adminPanelProfiles" class="admin-panel" hidden>
         <div class="admin-toolbar">
-          <input id="profileAdminQuery" type="search" placeholder="活動名・よみかた・個人／企業名で検索">
+          <input id="profileAdminQuery" type="search" placeholder="活動名・よみかた・企業名・おすすめ内容で検索">
           <button id="profileAdminSearch" class="admin-button primary" type="button">検索</button>
         </div>
         <div id="profileAdminList" class="admin-list"></div>
         <button id="profileAdminMore" class="admin-button secondary admin-more" type="button" hidden>さらに表示</button>
       </section>
 
-      <section id="adminPanelRecommendations" class="admin-panel" hidden>
-        <div class="admin-toolbar">
-          <input id="recommendationAdminQuery" type="search" placeholder="活動名・おすすめポイントで検索">
-          <button id="recommendationAdminSearch" class="admin-button primary" type="button">検索</button>
-        </div>
-        <div id="recommendationAdminList" class="admin-list"></div>
-        <button id="recommendationAdminMore" class="admin-button secondary admin-more" type="button" hidden>さらに表示</button>
-      </section>
     </section>
   </main>
 
@@ -143,6 +135,6 @@
 
   <footer><div class="wrap">VIC - VTuber Introduction Center -</div></footer>
   <script src="config.js"></script>
-  <script src="admin.js?v=20260722-vic-admin-bulk-badges1"></script>
+  <script src="admin.js?v=20260722-vic-public-edit2"></script>
 </body>
 </html>
