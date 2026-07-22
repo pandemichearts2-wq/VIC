@@ -4,11 +4,12 @@ const VIDEO_GENRES = ["雑談", "歌枠", "ゲーム実況", "お絵描き", "AS
 const state = {
   token: sessionStorage.getItem("vicAdminToken") || "",
   tab: "submissions",
-  submissions: { offset: 0, hasMore: false },
+  submissions: { offset: 0, hasMore: false, selected: new Set() },
   feedback: { offset: 0, hasMore: false },
   profiles: { offset: 0, hasMore: false },
   recommendations: { offset: 0, hasMore: false },
-  edit: null
+  edit: null,
+  notificationTimer: 0
 };
 
 function esc(value) {
@@ -45,6 +46,47 @@ async function api(action, payload = {}) {
   return data;
 }
 
+function setNotificationBadge(id, count, label) {
+  const badge = $(id);
+  if (!badge) return;
+  const value = Math.max(0, Number(count) || 0);
+  const countElement = badge.querySelector("[data-badge-count]");
+  const displayValue = value > 99 ? "99+" : String(value);
+  if (countElement) countElement.textContent = displayValue;
+  else badge.textContent = displayValue;
+  badge.hidden = value === 0;
+  badge.setAttribute("aria-label", `${label}${value}件`);
+}
+
+async function refreshAdminNotificationCounts() {
+  if (!state.token) return;
+  try {
+    const data = await api("adminNotificationCounts");
+    setNotificationBadge("submissionNotificationBadge", data.submissions, "確認待ちの申請");
+    const breakdown = data.breakdown || {};
+    setNotificationBadge("feedbackUnconfirmedBadge", breakdown.feedbackUnconfirmed, "未確認のお問い合わせ");
+    setNotificationBadge("feedbackInProgressBadge", breakdown.feedbackInProgress, "対応中のお問い合わせ");
+    const group = $("feedbackNotificationGroup");
+    if (group) group.hidden = !(Number(breakdown.feedbackUnconfirmed) || Number(breakdown.feedbackInProgress));
+  } catch (error) {
+    if (/ログイン|有効期限|セッション/.test(error.message)) {
+      logout();
+      return;
+    }
+    console.warn("件数バッジを更新できませんでした。", error);
+  }
+}
+
+function startNotificationPolling() {
+  window.clearInterval(state.notificationTimer);
+  state.notificationTimer = window.setInterval(refreshAdminNotificationCounts, 60000);
+}
+
+function stopNotificationPolling() {
+  window.clearInterval(state.notificationTimer);
+  state.notificationTimer = 0;
+}
+
 function typeLabel(type) {
   return type === "initial" ? "初回登録" : type === "recommendation" ? "おすすめ追加" : type;
 }
@@ -52,12 +94,20 @@ function typeLabel(type) {
 function setLoggedIn(loggedIn) {
   $("adminLogin").hidden = loggedIn;
   $("adminShell").hidden = !loggedIn;
-  if (loggedIn) loadActiveTab();
+  if (loggedIn) {
+    loadActiveTab();
+    refreshAdminNotificationCounts();
+    startNotificationPolling();
+  } else {
+    stopNotificationPolling();
+  }
 }
 
 function logout() {
   state.token = "";
   sessionStorage.removeItem("vicAdminToken");
+  state.submissions.selected.clear();
+  syncSubmissionBulkUi();
   $("adminPassword").value = "";
   setLoggedIn(false);
 }
@@ -109,6 +159,36 @@ function loadActiveTab() {
   else loadRecommendations(true);
 }
 
+function syncSubmissionBulkUi() {
+  const count = state.submissions.selected.size;
+  const countElement = $("submissionSelectedCount");
+  if (countElement) countElement.textContent = `${count}件選択`;
+  const approve = $("submissionBulkApprove");
+  const remove = $("submissionBulkDelete");
+  if (approve) approve.disabled = count === 0;
+  if (remove) remove.disabled = count === 0;
+}
+
+function clearSubmissionSelection() {
+  state.submissions.selected.clear();
+  document.querySelectorAll("#submissionList [data-submission-check]").forEach((input) => {
+    input.checked = false;
+    input.closest(".admin-card")?.classList.remove("is-selected");
+  });
+  syncSubmissionBulkUi();
+}
+
+function setVisibleSubmissionSelection(checked) {
+  document.querySelectorAll("#submissionList [data-submission-check]").forEach((input) => {
+    input.checked = checked;
+    const id = String(input.dataset.submissionId || "");
+    if (checked) state.submissions.selected.add(id);
+    else state.submissions.selected.delete(id);
+    input.closest(".admin-card")?.classList.toggle("is-selected", checked);
+  });
+  syncSubmissionBulkUi();
+}
+
 function renderSubmissionPayload(item) {
   const payload = item.payload || {};
   const videoUrl = safeUrl(payload.recommendedVideoUrl);
@@ -141,13 +221,21 @@ function renderSubmissionPayload(item) {
 function renderSubmissions(items, root) {
   items.forEach((item) => {
     const article = document.createElement("article");
-    article.className = "admin-card";
+    const submissionId = String(item.submissionId || "");
+    const checked = state.submissions.selected.has(submissionId);
+    article.className = `admin-card${checked ? " is-selected" : ""}`;
     article.innerHTML = `
       <div class="admin-card-head">
-        <div>
-          <span class="admin-badge">${esc(typeLabel(item.submissionType))}</span>
-          <h3>${esc(item.activityName || "活動名未設定")}</h3>
-          <p>${esc(item.submissionId)} / ${esc(fmtDate(item.receivedAt))}</p>
+        <div class="admin-card-heading">
+          <label class="admin-select-control">
+            <input data-submission-check data-submission-id="${esc(submissionId)}" type="checkbox" ${checked ? "checked" : ""}>
+            <span>選択</span>
+          </label>
+          <div>
+            <span class="admin-badge">${esc(typeLabel(item.submissionType))}</span>
+            <h3>${esc(item.activityName || "活動名未設定")}</h3>
+            <p>${esc(item.submissionId)} / ${esc(fmtDate(item.receivedAt))}</p>
+          </div>
         </div>
         <span class="admin-status-badge">${esc(item.status)}</span>
       </div>
@@ -159,6 +247,15 @@ function renderSubmissions(items, root) {
         <button class="admin-button primary" type="button" data-decision="approve">承認して掲載</button>
         <button class="admin-button danger" type="button" data-decision="reject">掲載不可</button>
       </div>`;
+
+    const checkbox = article.querySelector("[data-submission-check]");
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) state.submissions.selected.add(submissionId);
+      else state.submissions.selected.delete(submissionId);
+      article.classList.toggle("is-selected", checkbox.checked);
+      syncSubmissionBulkUi();
+    });
+
     const disabled = item.status !== "確認待ち";
     article.querySelectorAll("[data-decision]").forEach((button) => {
       button.disabled = disabled;
@@ -174,6 +271,7 @@ function renderSubmissions(items, root) {
             reviewNote: article.querySelector(".admin-review-note").value
           });
           await loadSubmissions(true);
+          await refreshAdminNotificationCounts();
         } catch (error) {
           window.alert(error.message);
           article.querySelectorAll("[data-decision]").forEach((itemButton) => { itemButton.disabled = false; });
@@ -188,6 +286,8 @@ async function loadSubmissions(reset) {
   const box = $("submissionList");
   if (reset) {
     state.submissions.offset = 0;
+    state.submissions.selected.clear();
+    syncSubmissionBulkUi();
     box.innerHTML = '<div class="admin-empty">読み込んでいます。</div>';
   }
   try {
@@ -204,6 +304,8 @@ async function loadSubmissions(reset) {
     state.submissions.hasMore = Boolean(data.hasMore);
     $("submissionMore").hidden = !data.hasMore;
     if (!box.children.length) box.innerHTML = '<div class="admin-empty">該当する申請はありません。</div>';
+    syncSubmissionBulkUi();
+    if (reset) refreshAdminNotificationCounts();
   } catch (error) {
     handleAdminError(error, box);
   }
@@ -251,6 +353,7 @@ function renderFeedback(items, root) {
           reviewNote: article.querySelector(".admin-feedback-note").value
         });
         await loadFeedback(true);
+        await refreshAdminNotificationCounts();
       } catch (error) {
         window.alert(error.message);
         button.disabled = false;
@@ -397,6 +500,36 @@ async function loadRecommendations(reset) {
   }
 }
 
+async function runSubmissionBulkOperation(operation) {
+  const ids = [...state.submissions.selected];
+  if (!ids.length) return;
+  const isApprove = operation === "approve";
+  const message = isApprove
+    ? `選択した${ids.length}件の申請を一括承認して掲載しますか？`
+    : `選択した${ids.length}件の申請履歴を一括削除しますか？\n公開済みのVTuber・おすすめ動画そのものは削除されません。`;
+  if (!window.confirm(message)) return;
+
+  const buttons = [$("submissionBulkApprove"), $("submissionBulkDelete"), $("submissionSelectAll"), $("submissionClearAll")].filter(Boolean);
+  buttons.forEach((button) => { button.disabled = true; });
+  try {
+    const data = await api("adminBulkSubmissions", { operation, submissionIds: ids });
+    const summary = `${data.success || 0}件を処理しました。${data.failed ? `\n${data.failed}件は処理できませんでした。` : ""}`;
+    if (Array.isArray(data.errors) && data.errors.length) {
+      const details = data.errors.slice(0, 10).map((item) => `${item.submissionId}: ${item.message}`).join("\n");
+      window.alert(`${summary}\n\n${details}${data.errors.length > 10 ? "\nほかにもエラーがあります。" : ""}`);
+    } else {
+      window.alert(summary);
+    }
+    await loadSubmissions(true);
+    await refreshAdminNotificationCounts();
+  } catch (error) {
+    window.alert(error.message);
+  } finally {
+    buttons.forEach((button) => { button.disabled = false; });
+    syncSubmissionBulkUi();
+  }
+}
+
 function inputField(label, name, value, type = "text") {
   if (type === "textarea") return `<label>${esc(label)}<textarea name="${esc(name)}" rows="5" maxlength="800">${esc(value || "")}</textarea></label>`;
   if (type === "select") return `<label>${esc(label)}<select name="${esc(name)}"><option value="公開中" ${value === "公開中" ? "selected" : ""}>公開中</option><option value="非公開" ${value === "非公開" ? "selected" : ""}>非公開</option></select></label>`;
@@ -470,6 +603,11 @@ $("adminEditForm").addEventListener("submit", async (event) => {
   }
 });
 
+$("submissionSelectAll").addEventListener("click", () => setVisibleSubmissionSelection(true));
+$("submissionClearAll").addEventListener("click", clearSubmissionSelection);
+$("submissionBulkApprove").addEventListener("click", () => runSubmissionBulkOperation("approve"));
+$("submissionBulkDelete").addEventListener("click", () => runSubmissionBulkOperation("delete"));
+
 $("submissionSearch").addEventListener("click", () => loadSubmissions(true));
 $("submissionMore").addEventListener("click", () => loadSubmissions(false));
 $("feedbackAdminSearch").addEventListener("click", () => loadFeedback(true));
@@ -488,6 +626,13 @@ $("recommendationAdminMore").addEventListener("click", () => loadRecommendations
     else if (input === $("profileAdminQuery")) loadProfiles(true);
     else loadRecommendations(true);
   });
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && state.token) refreshAdminNotificationCounts();
+});
+window.addEventListener("focus", () => {
+  if (state.token) refreshAdminNotificationCounts();
 });
 
 if (state.token) setLoggedIn(true);

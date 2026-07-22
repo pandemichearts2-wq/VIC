@@ -785,3 +785,91 @@ body.feedback-dialog-open{overflow:hidden}
   .feedback-form-footer{grid-template-columns:1fr auto}.feedback-form-footer .feedback-submit{grid-column:1/-1;width:100%}
   .admin-toolbar-feedback,.admin-feedback-controls{grid-template-columns:1fr}
 }
+
+
+/* ===== VIC admin bulk actions and notification badges ===== */
+.admin-bulk-toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+  margin:-4px 0 18px;
+  padding:14px;
+  border:1px solid rgba(126,77,51,.16);
+  border-radius:16px;
+  background:rgba(255,255,255,.72);
+}
+.admin-bulk-selection,.admin-bulk-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.admin-bulk-count{min-width:78px;color:#6a493b;font-weight:900}
+.admin-card-heading{display:flex;align-items:flex-start;gap:14px;min-width:0}
+.admin-select-control{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  flex:0 0 auto;
+  padding:8px 10px;
+  border:1px solid rgba(126,77,51,.20);
+  border-radius:12px;
+  background:#fff;
+  color:#654438;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+.admin-select-control input{width:19px;height:19px;margin:0;accent-color:#c86f43;cursor:pointer}
+.admin-card.is-selected{outline:3px solid rgba(217,133,78,.28);border-color:#cf8553;background:rgba(255,250,242,.97)}
+
+.admin-tab{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;overflow:visible}
+.admin-notification-group{
+  position:absolute;
+  top:-7px;
+  right:-8px;
+  z-index:3;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  pointer-events:none;
+}
+.admin-notification-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:20px;
+  height:20px;
+  padding:0 5px;
+  border:2px solid #fff4e7;
+  border-radius:999px;
+  color:#fff;
+  font-family:system-ui,sans-serif;
+  font-size:11px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:0;
+  box-shadow:0 3px 9px rgba(83,43,27,.25);
+  pointer-events:none;
+}
+.admin-notification-badge-submission{
+  position:absolute;
+  top:-7px;
+  right:-8px;
+  background:#bd3f3f;
+  box-shadow:0 3px 9px rgba(104,24,24,.28);
+}
+.admin-notification-badge-unconfirmed{background:#c23f3f}
+.admin-notification-badge-progress{background:#cf8b24}
+.admin-notification-mark{margin-right:2px;font-size:9px;font-weight:900;opacity:.92}
+.admin-notification-badge[hidden],.admin-notification-group[hidden]{display:none!important}
+
+@media(max-width:760px){
+  .admin-bulk-toolbar,.admin-bulk-selection,.admin-bulk-actions{display:grid;grid-template-columns:1fr;width:100%}
+  .admin-bulk-count{text-align:center;padding:4px 0}
+  .admin-card-heading{display:grid;grid-template-columns:1fr;gap:10px}
+  .admin-select-control{width:max-content}
+  .admin-tab{justify-content:flex-start;padding-right:72px}
+  .admin-notification-badge-submission{top:50%;right:14px;transform:translateY(-50%)}
+  .admin-notification-group{top:50%;right:12px;transform:translateY(-50%)}
+}
+
+/* Keep top-right notification badges visible inside the horizontally scrollable tab bar. */
+.admin-tabs{padding-top:10px;padding-right:12px}

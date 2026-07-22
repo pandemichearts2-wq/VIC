@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow">
   <title>VIC 管理画面</title>
   <meta name="description" content="VIC管理者専用ページ">
-  <link rel="stylesheet" href="styles.css?v=20260722-vic-feedback1">
+  <link rel="stylesheet" href="styles.css?v=20260722-vic-admin-bulk-badges1">
 </head>
 <body class="admin-page">
   <header class="admin-hero">
@@ -40,10 +40,19 @@
       </div>
 
       <nav class="admin-tabs" aria-label="管理項目">
-        <button class="admin-tab active" type="button" data-admin-tab="submissions">申請管理</button>
-        <button class="admin-tab" type="button" data-admin-tab="feedback">お問い合わせ管理</button>
-        <button class="admin-tab" type="button" data-admin-tab="profiles">公開VTuber</button>
-        <button class="admin-tab" type="button" data-admin-tab="recommendations">公開おすすめ</button>
+        <button class="admin-tab active" type="button" data-admin-tab="submissions">
+          <span>申請管理</span>
+          <span id="submissionNotificationBadge" class="admin-notification-badge admin-notification-badge-submission" aria-label="確認待ちの申請件数" hidden>0</span>
+        </button>
+        <button class="admin-tab" type="button" data-admin-tab="feedback">
+          <span>お問い合わせ管理</span>
+          <span id="feedbackNotificationGroup" class="admin-notification-group" aria-label="お問い合わせ件数" hidden>
+            <span id="feedbackUnconfirmedBadge" class="admin-notification-badge admin-notification-badge-unconfirmed" aria-label="未確認のお問い合わせ件数" title="未確認" hidden><span class="admin-notification-mark" aria-hidden="true">未</span><span data-badge-count>0</span></span>
+            <span id="feedbackInProgressBadge" class="admin-notification-badge admin-notification-badge-progress" aria-label="対応中のお問い合わせ件数" title="対応中" hidden><span class="admin-notification-mark" aria-hidden="true">中</span><span data-badge-count>0</span></span>
+          </span>
+        </button>
+        <button class="admin-tab" type="button" data-admin-tab="profiles"><span>公開VTuber</span></button>
+        <button class="admin-tab" type="button" data-admin-tab="recommendations"><span>公開おすすめ</span></button>
       </nav>
 
       <section id="adminPanelSubmissions" class="admin-panel">
@@ -61,6 +70,17 @@
             <option value="非許可（掲載不可）">非許可（掲載不可）</option>
           </select>
           <button id="submissionSearch" class="admin-button primary" type="button">検索</button>
+        </div>
+        <div class="admin-bulk-toolbar" aria-label="申請の一括操作">
+          <div class="admin-bulk-selection">
+            <button id="submissionSelectAll" class="admin-button secondary" type="button">一括チェック</button>
+            <button id="submissionClearAll" class="admin-button secondary" type="button">一括チェック解除</button>
+            <span id="submissionSelectedCount" class="admin-bulk-count" aria-live="polite">0件選択</span>
+          </div>
+          <div class="admin-bulk-actions">
+            <button id="submissionBulkApprove" class="admin-button primary" type="button" disabled>選択した申請を一括承認</button>
+            <button id="submissionBulkDelete" class="admin-button danger" type="button" disabled>選択した申請を一括削除</button>
+          </div>
         </div>
         <div id="submissionList" class="admin-list"></div>
         <button id="submissionMore" class="admin-button secondary admin-more" type="button" hidden>さらに表示</button>
@@ -123,6 +143,6 @@
 
   <footer><div class="wrap">VIC - VTuber Introduction Center -</div></footer>
   <script src="config.js"></script>
-  <script src="admin.js?v=20260722-vic-feedback1"></script>
+  <script src="admin.js?v=20260722-vic-admin-bulk-badges1"></script>
 </body>
 </html>
