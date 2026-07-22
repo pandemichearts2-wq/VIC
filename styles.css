@@ -633,6 +633,26 @@ footer{padding:30px 0 70px;border-top:1px solid var(--line);color:#8f7162;text-a
   line-height:1.1;
 }
 .recommendation-description{max-width:680px;margin:0;color:var(--muted)}
+.recommendation-refresh{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:18px;
+  padding:10px 24px;
+  border:1px solid rgba(126,77,51,.22);
+  border-radius:999px;
+  color:#6d4636;
+  background:rgba(255,252,247,.88);
+  box-shadow:0 9px 22px rgba(104,61,39,.08);
+  font:inherit;
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:.08em;
+  cursor:pointer;
+  transition:transform .2s ease,background .2s ease,border-color .2s ease;
+}
+.recommendation-refresh:hover{transform:translateY(-2px);background:#fff7ec;border-color:rgba(126,77,51,.36)}
+.recommendation-refresh:disabled{opacity:.55;cursor:wait;transform:none}
 .recommendation-controls{
   display:grid;
   gap:14px;

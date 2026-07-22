@@ -87,10 +87,10 @@ async function loadRecommendations() {
   const genre = $("recommendationGenre")?.value || "";
   const list = $("recommendationList");
   const status = $("recommendationStatus");
-  const button = $("recommendationShuffle");
+  const buttons = [$("recommendationShuffle"), $("recommendationRefresh")].filter(Boolean);
   if (list) list.innerHTML = '<p class="status-message">おすすめを選んでいます。</p>';
   if (status) status.textContent = "";
-  if (button) button.disabled = true;
+  buttons.forEach((button) => { button.disabled = true; });
   try {
     renderRecommendations(await requestRecommendations(genre), genre);
   } catch (error) {
@@ -98,13 +98,14 @@ async function loadRecommendations() {
     if (list) list.innerHTML = "";
     if (status) status.textContent = error.message || "おすすめを読み込めませんでした。";
   } finally {
-    if (button) button.disabled = false;
+    buttons.forEach((button) => { button.disabled = false; });
   }
 }
 
 function setupRecommendationControls() {
   $("recommendationGenre")?.addEventListener("change", loadRecommendations);
   $("recommendationShuffle")?.addEventListener("click", loadRecommendations);
+  $("recommendationRefresh")?.addEventListener("click", loadRecommendations);
   loadRecommendations();
 }
 
