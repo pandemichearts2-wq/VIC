@@ -1308,3 +1308,53 @@ body.feedback-dialog-open{overflow:hidden}
   .hero .vic-hero-layout .vic-hero-title{font-size:27px}
   .hero .vic-hero-layout .vic-hero-tagline{font-size:7.5px}
 }
+
+/* ===== Mobile hero overlap fix: keep title and featured thumbnail side-by-side ===== */
+@media(max-width:720px){
+  .hero .wrap.vic-hero-layout{
+    grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);
+    gap:12px;
+  }
+  .vic-hero-copy{
+    min-width:0;
+    overflow:hidden;
+  }
+  .hero .vic-hero-layout .vic-hero-title{
+    width:100%;
+    max-width:100%;
+    font-size:clamp(18px,6vw,30px);
+    line-height:.88;
+    letter-spacing:-.05em;
+  }
+  .hero .vic-hero-layout .vic-hero-title span{
+    max-width:100%;
+    white-space:nowrap;
+  }
+  .hero .vic-hero-layout .vic-hero-tagline{
+    max-width:100%;
+    font-size:clamp(7px,2.2vw,10px);
+    line-height:1.5;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+  .vic-featured-showcase{
+    width:100%;
+    min-width:0;
+    padding:6px 8px 9px 2px;
+  }
+  .vic-featured-stack{max-width:100%}
+}
+
+@media(max-width:390px){
+  .hero .wrap.vic-hero-layout{
+    grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);
+    gap:8px;
+  }
+  .hero .vic-hero-layout .vic-hero-title{
+    font-size:clamp(17px,5.8vw,23px);
+  }
+  .hero .vic-hero-layout .vic-hero-tagline{
+    margin-top:14px;
+    font-size:clamp(6.5px,2vw,8px);
+  }
+}
