@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>VIC - VTuber Introduction Center -</title>
   <meta name="description" content="おすすめ動画を通してVTuberの魅力と新しい出会いを届ける紹介サイト">
-  <link rel="stylesheet" href="styles.css?v=20260722-vic-site-introduction1">
+  <link rel="stylesheet" href="styles.css?v=20260722-vic-fanart1">
 </head>
 <body class="home">
   <header class="hero">
@@ -33,6 +33,17 @@
       </div>
     </section>
 
+
+    <section class="vic-home-fanart" aria-labelledby="homeFanArtTitle">
+      <div class="vic-home-fanart-head">
+        <div><p class="eyebrow">Community Fan Art</p><h2 id="homeFanArtTitle">みんなのファンアート</h2><p>みんなの想いや願いの込められた素敵なFAを、ランダムで一枚ずつ表示いたします。</p></div>
+        <div class="vic-home-fanart-register"><a href="fanart.html">FAを登録する</a><a class="adult-link" href="adult-fanart.html">成人向けFAを登録する</a></div>
+      </div>
+      <div id="homeFanArtViewer" class="home-fanart-viewer" aria-live="polite"><div class="fanart-empty"><p>ファンアートを読み込んでいます。</p></div></div>
+      <div class="vic-home-fanart-actions"><button id="homeFanArtNext" type="button">別のFAを表示</button><a href="fanart.html">FAページを見る</a><a class="adult-link" href="adult-fanart.html">成人向けFAページを見る</a></div>
+      <p class="fanart-protection-copy">掲載画像の無断保存・無断転載・無断使用・AI学習への利用は禁止です。</p>
+      <p class="fanart-retention-notice">※FAの保管数が最大になりますと古い順で過去投稿分が消えてしまいます為、3～4か月おき程度で再掲載をして頂きます事をお勧め致します。</p>
+    </section>
     <section id="recommendationSection" class="recommendation-section" aria-labelledby="recommendationTitle">
       <div class="recommendation-section-head">
         <div>
@@ -118,6 +129,6 @@
 
   <script src="config.js"></script>
   
-  <script src="feedback.js?v=20260722-vic-feedback1"></script><script src="app.js?v=20260722-vic-feedback1"></script>
+  <script src="feedback.js?v=20260722-vic-feedback1"></script><script src="home-fanart.js?v=20260722-vic-fanart1"></script><script src="app.js?v=20260722-vic-feedback1"></script>
 </body>
 </html>

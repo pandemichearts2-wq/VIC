@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>成人向けFA | VIC</title>
+  <meta name="description" content="18歳以上を対象としたVICの成人向けファンアートページ">
+  <link rel="stylesheet" href="styles.css?v=20260722-vic-fanart1">
+</head>
+<body class="fanart-page adult-fanart-page" data-fanart-category="adult">
+<header class="hero fanart-hero adult-fanart-hero"><div class="wrap"><p class="eyebrow">Adults Only Fan Art</p><h1>成人向けFAを、<br>分けて楽しむ。</h1><p class="subtitle">18歳以上の方のみ閲覧できます</p></div></header>
+<main class="wrap fanart-main">
+  <nav class="back-nav" aria-label="トップページへ戻る"><a class="text-link" href="index.html">VICへ戻る</a></nav>
+  <section id="adultGate" class="adult-gate">
+    <p class="eyebrow">Age Confirmation</p><h2>成人向け表現を含みます</h2>
+    <div class="adult-warning">
+      <p>この先には、性的・刺激の強い表現を含むファンアートがあります。</p>
+      <p>18歳未満の方、成人向け表現が苦手な方、職場や公共の場所で閲覧している方は進まないでください。</p>
+      <p>※閲覧は自己責任にてお願い致します。</p><hr>
+      <p>対象のVTuberの方の規約をご確認の上、自己責任にて投稿をお願い致します。</p>
+      <p>公式画像を加工した画像、無断転載、本人や権利者が禁止している作品、AI生成画像は禁止です。</p>
+    </div>
+    <label class="adult-confirm"><input id="adultConfirm" type="checkbox"> 18歳以上なので閲覧します</label>
+  </section>
+  <div id="adultContent" class="adult-content hidden">
+    <section class="fanart-gallery-section">
+      <div class="fanart-section-heading"><p class="eyebrow">Adults Only Random Art</p><div><h2>成人向けFA</h2><p>承認された成人向け作品の中から、ランダムで最大10枚を展示します。画像を押すと拡大できます。</p></div></div>
+      <div id="fanArtViewer" class="fanart-viewer adult-fanart-viewer" aria-live="polite"><div class="fanart-empty"><p>作品を読み込んでいます。</p></div></div>
+      <div class="fanart-view-actions"><button id="nextFanArtButton" class="fanart-action-button" type="button">別の10作品を表示</button></div>
+      <p class="fanart-protection-copy">掲載画像の無断保存・無断転載・無断使用・AI学習への利用は禁止です。</p>
+      <p class="fanart-retention-notice">※FAの保管数が最大になりますと古い順で過去投稿分が消えてしまいます為、3～4か月おき程度で再掲載をして頂きます事をお勧め致します。</p>
+    </section>
+    <div class="fanart-registration-toggle-wrap"><button id="fanArtFormToggle" class="fanart-action-button fanart-registration-toggle" type="button" aria-controls="adultFanArtRegistration" aria-expanded="false">成人向けFA画像を登録する</button></div>
+    <section id="adultFanArtRegistration" class="fanart-submit-section hidden" hidden>
+      <div class="fanart-section-heading"><p class="eyebrow">Adults Only Contribution</p><div><h2>成人向けFAを登録する</h2><p>送信された作品は、通常FAとは別に管理者が確認します。</p></div></div>
+      <div class="fanart-rules adult-submit-warning"><strong>成人向けFAの投稿ルール</strong><p>成人として明確に設定され、成人に見えるキャラクターの作品のみ登録できます。未成年・年齢不明・幼く見えるキャラクター、実在人物の性的画像、無断転載、掲載許可のない作品は禁止です。</p></div>
+      <form id="fanArtForm" class="fanart-form">
+        <div class="form-grid fanart-form-grid">
+          <label>VTuberの活動名<input name="activityName" type="text" required maxlength="100"></label>
+          <label>作品タイトル<input name="title" type="text" maxlength="120"></label>
+          <fieldset class="fanart-author-choice wide"><legend>作者名の表示</legend><label><input type="radio" name="authorMode" value="anonymous" checked> 匿名で表示</label><label><input type="radio" name="authorMode" value="named"> 記入した名前で表示</label></fieldset>
+          <label id="authorNameField" class="wide fanart-conditional-field hidden">表示する作者名<input name="authorName" type="text" maxlength="80" placeholder="作者名・ハンドルネーム"></label>
+          <label class="wide">成人向けFA画像<input id="fanArtFile" name="fanArtFile" type="file" accept="image/jpeg,image/png,image/webp" required><span class="field-help">JPEG・PNG・WebP、選択時5MBまで。送信前に長辺2000px以下・約2MB以下へ自動圧縮します。</span></label>
+          <div id="fanArtPreview" class="fanart-upload-preview wide hidden"></div>
+          <label class="wide">作品について・補足<textarea name="note" rows="4" maxlength="500"></textarea></label>
+        </div>
+        <label class="fanart-submit-rules"><input id="fanArtRulesAccepted" type="checkbox" required> 成人向け投稿ルールを確認し、公開可能な作品のみを送信します。</label>
+        <button id="fanArtSubmitButton" class="submit-button" type="submit" disabled aria-disabled="true">成人向けFAを送信する</button>
+        <p id="fanArtFormMessage" class="form-message" aria-live="polite"></p>
+      </form>
+    </section>
+  </div>
+</main>
+<footer><div class="wrap">VIC - VTuber Introduction Center - Adults Only Fan Art</div></footer>
+<script src="config.js"></script><script src="fanart.js?v=20260722-vic-fanart1"></script>
+</body></html>

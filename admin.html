@@ -6,14 +6,24 @@
   <meta name="robots" content="noindex,nofollow">
   <title>VIC 管理画面</title>
   <meta name="description" content="VIC管理者専用ページ">
-  <link rel="stylesheet" href="styles.css?v=20260722-vic-public-edit2">
+  <link rel="stylesheet" href="styles.css?v=20260722-vic-fanart1">
 </head>
 <body class="admin-page">
   <header class="admin-hero">
-    <div class="wrap">
-      <p class="eyebrow">Private Management</p>
-      <h1>VIC<br><span>Management</span></h1>
-      <p>VTuber Introduction Center 管理者専用</p>
+    <div class="wrap admin-hero-layout">
+      <div class="admin-hero-copy">
+        <p class="eyebrow">Private Management</p>
+        <h1>VIC<br><span>Management</span></h1>
+        <p>VTuber Introduction Center 管理者専用</p>
+      </div>
+      <section class="admin-featured-showcase" aria-label="管理人おすすめ動画">
+        <div id="adminFeaturedStack" class="admin-featured-stack">
+          <div id="adminFeaturedEmpty" class="admin-featured-empty">
+            <span>Administrator's Pick</span>
+            <strong>管理人おすすめを準備中</strong>
+          </div>
+        </div>
+      </section>
     </div>
   </header>
 
@@ -52,6 +62,8 @@
           </span>
         </button>
         <button class="admin-tab" type="button" data-admin-tab="profiles"><span>公開VTuber編集</span></button>
+        <button class="admin-tab" type="button" data-admin-tab="fanart"><span>公開FA編集</span></button>
+        <button class="admin-tab" type="button" data-admin-tab="featured"><span>管理人おすすめ編集</span></button>
         <button id="adminPageRefresh" class="admin-button secondary admin-page-refresh" type="button" aria-label="管理画面を更新">更新</button>
       </nav>
 
@@ -62,6 +74,8 @@
             <option value="">すべての種類</option>
             <option value="initial">初回登録</option>
             <option value="recommendation">おすすめ追加</option>
+            <option value="fanartGeneral">通常FA</option>
+            <option value="fanartAdult">成人向けFA</option>
           </select>
           <select id="submissionStatus">
             <option value="確認待ち">確認待ち</option>
@@ -112,6 +126,41 @@
         <button id="profileAdminMore" class="admin-button secondary admin-more" type="button" hidden>さらに表示</button>
       </section>
 
+
+      <section id="adminPanelFanArt" class="admin-panel" hidden>
+        <div class="admin-toolbar">
+          <select id="fanArtAdminCategory"><option value="general">通常FA</option><option value="adult">成人向けFA</option></select>
+          <input id="fanArtAdminQuery" type="search" placeholder="VTuber名・作品名・作者名で検索">
+          <button id="fanArtAdminSearch" class="admin-button primary" type="button">検索</button>
+        </div>
+        <p class="admin-panel-note">公開済みFAの情報編集、公開・非公開、画像ダウンロード、削除ができます。</p>
+        <div id="fanArtAdminList" class="admin-list"></div>
+        <button id="fanArtAdminMore" class="admin-button secondary admin-more" type="button" hidden>さらに表示</button>
+      </section>
+      <section id="adminPanelFeatured" class="admin-panel" hidden>
+        <div class="admin-featured-admin-head">
+          <div>
+            <p class="eyebrow">Administrator's Pick</p>
+            <h2>管理人おすすめ編集</h2>
+            <p>登録した動画は管理画面上部で5秒ごとにランダム表示されます。</p>
+          </div>
+        </div>
+        <form id="featuredAdminForm" class="admin-featured-form">
+          <label>表示名
+            <select id="featuredAdminCategory" required>
+              <option value="管理人おすすめ歌みた">管理人おすすめ歌みた</option>
+              <option value="管理人おすすめ歌枠">管理人おすすめ歌枠</option>
+            </select>
+          </label>
+          <label>YouTube動画リンク
+            <input id="featuredAdminVideoUrl" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=..." required>
+          </label>
+          <button class="admin-button primary" type="submit">管理人おすすめに登録</button>
+          <p id="featuredAdminMessage" class="admin-status" role="status"></p>
+        </form>
+        <div id="featuredAdminList" class="admin-list admin-featured-admin-list"></div>
+      </section>
+
     </section>
   </main>
 
@@ -135,6 +184,6 @@
 
   <footer><div class="wrap">VIC - VTuber Introduction Center -</div></footer>
   <script src="config.js"></script>
-  <script src="admin.js?v=20260722-vic-public-edit2"></script>
+  <script src="admin.js?v=20260722-vic-fanart1"></script>
 </body>
 </html>

@@ -1,12 +1,16 @@
 const API_URL = window.VIC_CONFIG?.API_URL || "";
 const $ = (id) => document.getElementById(id);
 const VIDEO_GENRES = ["雑談", "歌枠", "ゲーム実況", "お絵描き", "ASMR", "料理", "開封", "旅行・旅", "作業", "企画", "耐久", "コラボ", "案件", "ニュース", "読書・朗読", "その他"];
+const FEATURED_CATEGORIES = ["管理人おすすめ歌みた", "管理人おすすめ歌枠"];
 const state = {
   token: sessionStorage.getItem("vicAdminToken") || "",
   tab: "submissions",
   submissions: { offset: 0, hasMore: false, selected: new Set() },
   feedback: { offset: 0, hasMore: false },
   profiles: { offset: 0, hasMore: false },
+  featured: { items: [] },
+  fanart: { offset: 0, hasMore: false },
+  featuredShowcase: { items: [], currentIndex: -1, timer: 0 },
   edit: null,
   notificationTimer: 0
 };
@@ -43,6 +47,88 @@ async function api(action, payload = {}) {
   const data = await response.json();
   if (!data.ok) throw new Error(data.message || "処理できませんでした。");
   return data;
+}
+
+async function publicApi(action, params = {}) {
+  if (!API_URL) throw new Error("API URLが設定されていません。");
+  const url = new URL(API_URL);
+  url.searchParams.set("action", action);
+  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
+  const response = await fetch(url.toString(), { cache: "no-store" });
+  if (!response.ok) throw new Error(`通信に失敗しました（${response.status}）`);
+  const data = await response.json();
+  if (!data.ok) throw new Error(data.message || "処理できませんでした。");
+  return data;
+}
+
+function clearFeaturedShowcaseTimer() {
+  window.clearInterval(state.featuredShowcase.timer);
+  state.featuredShowcase.timer = 0;
+}
+
+function pickNextFeaturedIndex() {
+  const length = state.featuredShowcase.items.length;
+  if (!length) return -1;
+  if (length === 1) return 0;
+  let next = state.featuredShowcase.currentIndex;
+  while (next === state.featuredShowcase.currentIndex) next = Math.floor(Math.random() * length);
+  return next;
+}
+
+function showNextFeaturedVideo() {
+  const stack = $("adminFeaturedStack");
+  if (!stack || !state.featuredShowcase.items.length) return;
+  const nextIndex = pickNextFeaturedIndex();
+  if (nextIndex < 0) return;
+  state.featuredShowcase.currentIndex = nextIndex;
+  const item = state.featuredShowcase.items[nextIndex] || {};
+  const videoUrl = safeUrl(item.videoUrl);
+  const thumbnailUrl = safeUrl(item.thumbnailUrl);
+  if (!videoUrl || !thumbnailUrl) return;
+
+  stack.querySelectorAll(".admin-featured-slide").forEach((slide) => slide.classList.add("is-leaving"));
+  const link = document.createElement("a");
+  link.className = "admin-featured-slide is-entering";
+  link.href = videoUrl;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.setAttribute("aria-label", `${item.category || "管理人おすすめ"}をYouTubeで開く`);
+  link.innerHTML = `
+    <img src="${esc(thumbnailUrl)}" alt="${esc(item.category || "管理人おすすめ動画")}のサムネイル">
+    <span class="admin-featured-overlay">
+      <small>Administrator's Pick</small>
+      <strong>${esc(item.category || "管理人おすすめ")}</strong>
+      <em>動画を見る ↗</em>
+    </span>`;
+  stack.appendChild(link);
+  $("adminFeaturedEmpty")?.remove();
+  window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+    link.classList.remove("is-entering");
+    link.classList.add("is-active");
+  }));
+  window.setTimeout(() => {
+    stack.querySelectorAll(".admin-featured-slide.is-leaving").forEach((slide) => slide.remove());
+  }, 1500);
+}
+
+async function loadFeaturedShowcase() {
+  const stack = $("adminFeaturedStack");
+  if (!stack) return;
+  clearFeaturedShowcaseTimer();
+  try {
+    const data = await publicApi("featuredVideos");
+    state.featuredShowcase.items = Array.isArray(data.items) ? data.items : [];
+    state.featuredShowcase.currentIndex = -1;
+    stack.querySelectorAll(".admin-featured-slide").forEach((slide) => slide.remove());
+    if (!state.featuredShowcase.items.length) {
+      stack.innerHTML = `<div id="adminFeaturedEmpty" class="admin-featured-empty"><span>Administrator's Pick</span><strong>管理人おすすめを登録すると、ここに表示されます</strong></div>`;
+      return;
+    }
+    showNextFeaturedVideo();
+    state.featuredShowcase.timer = window.setInterval(showNextFeaturedVideo, 5000);
+  } catch (error) {
+    stack.innerHTML = `<div id="adminFeaturedEmpty" class="admin-featured-empty"><span>Administrator's Pick</span><strong>${esc(error.message)}</strong></div>`;
+  }
 }
 
 function setNotificationBadge(id, count, label) {
@@ -87,7 +173,7 @@ function stopNotificationPolling() {
 }
 
 function typeLabel(type) {
-  return type === "initial" ? "初回登録" : type === "recommendation" ? "おすすめ追加" : type;
+  return type === "initial" ? "初回登録" : type === "recommendation" ? "おすすめ追加" : type === "fanartGeneral" ? "通常FA" : type === "fanartAdult" ? "成人向けFA" : type;
 }
 
 function setLoggedIn(loggedIn) {
@@ -140,6 +226,8 @@ document.querySelectorAll(".admin-tab").forEach((button) => {
     $("adminPanelSubmissions").hidden = state.tab !== "submissions";
     $("adminPanelFeedback").hidden = state.tab !== "feedback";
     $("adminPanelProfiles").hidden = state.tab !== "profiles";
+    $("adminPanelFeatured").hidden = state.tab !== "featured";
+    $("adminPanelFanArt").hidden = state.tab !== "fanart";
     loadActiveTab();
   });
 });
@@ -156,6 +244,8 @@ function loadActiveTab() {
   if (state.tab === "submissions") loadSubmissions(true);
   else if (state.tab === "feedback") loadFeedback(true);
   else if (state.tab === "profiles") loadProfiles(true);
+  else if (state.tab === "featured") loadFeaturedAdmin();
+  else if (state.tab === "fanart") loadFanArtsAdmin(true);
 }
 
 function syncSubmissionBulkUi() {
@@ -192,6 +282,10 @@ function renderSubmissionPayload(item) {
   const payload = item.payload || {};
   const videoUrl = safeUrl(payload.recommendedVideoUrl);
   const point = esc(payload.recommendationPoint || "").replace(/\r?\n/g, "<br>");
+  if (item.submissionType === "fanartGeneral" || item.submissionType === "fanartAdult") {
+    const imageUrl = safeUrl(payload.imageUrl);
+    return `<div class="admin-fanart-preview"><div>${imageUrl ? `<img src="${esc(imageUrl)}" alt="申請ファンアート" loading="lazy">` : "画像を表示できません"}</div><div><dl class="admin-data-grid"><div><dt>作品名</dt><dd>${esc(payload.title || "無題")}</dd></div><div><dt>作者</dt><dd>${esc(payload.authorName || "匿名")}</dd></div><div><dt>区分</dt><dd>${item.submissionType === "fanartAdult" ? "成人向けFA" : "通常FA"}</dd></div><div><dt>補足</dt><dd>${esc(payload.note || "")}</dd></div></dl>${payload.fileId ? `<div class="admin-fanart-actions"><button class="admin-button admin-download-button" type="button" data-download-fanart data-file-id="${esc(payload.fileId)}">画像をダウンロード</button></div>` : ""}</div></div>`;
+  }
   if (item.submissionType === "initial") {
     return `
       <dl class="admin-data-grid">
@@ -253,6 +347,11 @@ function renderSubmissions(items, root) {
       else state.submissions.selected.delete(submissionId);
       article.classList.toggle("is-selected", checkbox.checked);
       syncSubmissionBulkUi();
+    });
+
+    article.querySelector("[data-download-fanart]")?.addEventListener("click", async (event) => {
+      const button = event.currentTarget; button.disabled = true;
+      try { await downloadFanArtFile(button.dataset.fileId); } catch (error) { window.alert(error.message); } finally { button.disabled = false; }
     });
 
     const disabled = item.status !== "確認待ち";
@@ -529,13 +628,71 @@ async function loadProfiles(reset) {
   }
 }
 
+function featuredCard(item) {
+  const data = item.data || {};
+  const videoUrl = safeUrl(data.videoUrl);
+  const thumbnailUrl = safeUrl(data.thumbnailUrl);
+  return `
+    <article class="admin-card admin-featured-admin-card">
+      <div class="admin-featured-admin-media">
+        ${videoUrl && thumbnailUrl ? `<a href="${esc(videoUrl)}" target="_blank" rel="noopener noreferrer"><img src="${esc(thumbnailUrl)}" alt="${esc(data.category || "管理人おすすめ")}のサムネイル"></a>` : ""}
+      </div>
+      <div class="admin-featured-admin-copy">
+        <div class="admin-card-head">
+          <div><span class="admin-badge">管理人おすすめ</span><h3>${esc(data.category || "管理人おすすめ")}</h3><p>${esc(fmtDate(data.updatedAt || data.createdAt))}</p></div>
+          <span class="admin-status-badge">${esc(data.publicStatus || "公開中")}</span>
+        </div>
+        ${videoUrl ? `<a class="admin-video-link" href="${esc(videoUrl)}" target="_blank" rel="noopener noreferrer">YouTubeで動画を開く ↗</a>` : ""}
+        <div class="admin-card-actions">
+          <button class="admin-button primary" type="button" data-edit-featured>編集</button>
+          <button class="admin-button danger" type="button" data-delete-featured>削除</button>
+        </div>
+      </div>
+    </article>`;
+}
+
+function bindFeaturedActions(article, item) {
+  article.querySelector("[data-edit-featured]").addEventListener("click", () => openEditDialog("featured", item));
+  article.querySelector("[data-delete-featured]").addEventListener("click", async () => {
+    if (!window.confirm(`「${item.data.category || "管理人おすすめ"}」を削除しますか？`)) return;
+    try {
+      await api("adminDeleteFeaturedVideo", { id: item.id });
+      await loadFeaturedAdmin();
+      await loadFeaturedShowcase();
+    } catch (error) {
+      window.alert(error.message);
+    }
+  });
+}
+
+async function loadFeaturedAdmin() {
+  const box = $("featuredAdminList");
+  if (!box) return;
+  box.innerHTML = '<div class="admin-empty">読み込んでいます。</div>';
+  try {
+    const data = await api("adminListFeaturedVideos");
+    state.featured.items = data.items || [];
+    box.innerHTML = "";
+    state.featured.items.forEach((item) => {
+      const holder = document.createElement("div");
+      holder.innerHTML = featuredCard(item);
+      const article = holder.firstElementChild;
+      bindFeaturedActions(article, item);
+      box.appendChild(article);
+    });
+    if (!box.children.length) box.innerHTML = '<div class="admin-empty">管理人おすすめはまだ登録されていません。</div>';
+  } catch (error) {
+    handleAdminError(error, box);
+  }
+}
+
 async function runSubmissionBulkOperation(operation) {
   const ids = [...state.submissions.selected];
   if (!ids.length) return;
   const isApprove = operation === "approve";
   const message = isApprove
     ? `選択した${ids.length}件の申請を一括承認して掲載しますか？`
-    : `選択した${ids.length}件の申請履歴を一括削除しますか？\n公開済みのVTuber・おすすめ動画そのものは削除されません。`;
+    : `選択した${ids.length}件の申請履歴を一括削除しますか？\n確認待ちのFA画像はGoogle Driveのゴミ箱へ移動します。\n公開済みのVTuber・おすすめ動画・FAそのものは削除されません。`;
   if (!window.confirm(message)) return;
 
   const buttons = [$("submissionBulkApprove"), $("submissionBulkDelete"), $("submissionSelectAll"), $("submissionClearAll")].filter(Boolean);
@@ -559,11 +716,39 @@ async function runSubmissionBulkOperation(operation) {
   }
 }
 
+
+function base64ToBlob(base64, mimeType) {
+  const binary = atob(String(base64 || ""));
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return new Blob([bytes], { type: mimeType || "application/octet-stream" });
+}
+async function downloadFanArtFile(fileId) {
+  const data = await api("adminDownloadFanArt", { fileId });
+  const url = URL.createObjectURL(base64ToBlob(data.base64, data.mimeType));
+  const link = document.createElement("a"); link.href = url; link.download = String(data.fileName || "fanart-image").replace(/[\\/:*?"<>|]/g, "_");
+  document.body.appendChild(link); link.click(); link.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function fanArtAdminCard(item) {
+  const data=item.data||{},imageUrl=safeUrl(data.imageUrl),adult=item.category==="adult";
+  return `<article class="admin-card admin-fanart-card${adult?" is-adult":""}"><div class="admin-card-head"><div><span class="admin-badge">${adult?"成人向けFA":"通常FA"}</span><h3>${esc(data.title||"無題のFA")}</h3><p>${esc(data.activityName||"")} / ${esc(data.authorName||"匿名")} / ${esc(fmtDate(data.approvedAt))}</p></div><span class="admin-status-badge">${esc(data.publicStatus||"公開中")}</span></div><div class="admin-fanart-preview"><div>${imageUrl?`<img src="${esc(imageUrl)}" alt="${esc(data.title||"FA画像")}" loading="lazy">`:"画像を表示できません"}</div><div><div class="admin-point"><strong>補足</strong><p>${esc(data.note||"").replace(/\\r?\\n/g,"<br>")}</p></div><div class="admin-fanart-actions"><button class="admin-button primary" type="button" data-edit-fanart>FA情報を編集</button><button class="admin-button admin-download-button" type="button" data-download-public-fanart>画像をダウンロード</button><button class="admin-button danger" type="button" data-delete-fanart>FAを削除</button></div></div></div></article>`;
+}
+function bindFanArtActions(article,item){
+  article.querySelector("[data-edit-fanart]").addEventListener("click",()=>openEditDialog("fanart",item));
+  article.querySelector("[data-download-public-fanart]").addEventListener("click",async e=>{const button=e.currentTarget;button.disabled=true;try{await downloadFanArtFile(item.data.fileId);}catch(error){window.alert(error.message);}finally{button.disabled=false;}});
+  article.querySelector("[data-delete-fanart]").addEventListener("click",async()=>{if(!window.confirm(`「${item.data.title||"無題のFA"}」を画像ファイルごと削除しますか？`))return;try{await api("adminDeleteFanArt",{id:item.id,category:item.category});await loadFanArtsAdmin(true);}catch(error){window.alert(error.message);}});
+}
+async function loadFanArtsAdmin(reset){
+  const box=$("fanArtAdminList");if(!box)return;if(reset){state.fanart.offset=0;box.innerHTML='<div class="admin-empty">読み込んでいます。</div>';}
+  try{const data=await api("adminListFanArts",{category:$("fanArtAdminCategory").value,q:$("fanArtAdminQuery").value,offset:state.fanart.offset,limit:30});if(reset)box.innerHTML="";(data.items||[]).forEach(item=>{const holder=document.createElement("div");holder.innerHTML=fanArtAdminCard(item);const article=holder.firstElementChild;bindFanArtActions(article,item);box.appendChild(article);});state.fanart.offset=data.nextOffset||0;state.fanart.hasMore=Boolean(data.hasMore);$("fanArtAdminMore").hidden=!data.hasMore;if(!box.children.length)box.innerHTML='<div class="admin-empty">該当する公開FAはありません。</div>';}catch(error){handleAdminError(error,box);}
+}
+
 function inputField(label, name, value, type = "text") {
   if (type === "textarea") return `<label>${esc(label)}<textarea name="${esc(name)}" rows="5" maxlength="800">${esc(value || "")}</textarea></label>`;
   if (type === "select") return `<label>${esc(label)}<select name="${esc(name)}"><option value="公開中" ${value === "公開中" ? "selected" : ""}>公開中</option><option value="非公開" ${value === "非公開" ? "selected" : ""}>非公開</option></select></label>`;
   if (type === "profileStatus") return `<label>${esc(label)}<select name="${esc(name)}"><option value="公開" ${value === "公開" ? "selected" : ""}>公開</option><option value="非公開" ${value === "非公開" ? "selected" : ""}>非公開</option></select></label>`;
   if (type === "genreSelect") return `<label>${esc(label)}<select name="${esc(name)}">${VIDEO_GENRES.map((genre) => `<option value="${esc(genre)}" ${genre === (value || "その他") ? "selected" : ""}>${esc(genre)}</option>`).join("")}</select></label>`;
+  if (type === "featuredCategory") return `<label>${esc(label)}<select name="${esc(name)}">${FEATURED_CATEGORIES.map((category) => `<option value="${esc(category)}" ${category === value ? "selected" : ""}>${esc(category)}</option>`).join("")}</select></label>`;
   return `<label>${esc(label)}<input name="${esc(name)}" type="${esc(type)}" value="${esc(value || "")}"></label>`;
 }
 
@@ -584,12 +769,26 @@ function openEditDialog(type, item) {
       inputField("その他リンク3", "otherLink3", data.otherLink3, "url"),
       inputField("公開状態", "status", data.status || "公開", "profileStatus")
     ].join("");
-  } else {
+  } else if (type === "recommendation") {
     $("adminEditTitle").textContent = "おすすめ動画を編集";
     $("adminEditFields").innerHTML = [
       inputField("動画ジャンル", "genre", data.genre || "その他", "genreSelect"),
       inputField("おすすめ動画リンク", "videoUrl", data.videoUrl, "url"),
       inputField("おすすめポイント", "recommendationPoint", data.recommendationPoint, "textarea"),
+      inputField("公開状態", "publicStatus", data.publicStatus || "公開中", "select")
+    ].join("");
+  } else if (type === "fanart") {
+    $("adminEditTitle").textContent = "公開FAを編集";
+    $("adminEditFields").innerHTML = [
+      inputField("VTuberの活動名", "activityName", data.activityName), inputField("作品名", "title", data.title),
+      inputField("作者名", "authorName", data.authorName), inputField("補足", "note", data.note, "textarea"),
+      inputField("公開状態", "publicStatus", data.publicStatus || "公開中", "select")
+    ].join("");
+  } else {
+    $("adminEditTitle").textContent = "管理人おすすめを編集";
+    $("adminEditFields").innerHTML = [
+      inputField("表示名", "category", data.category || FEATURED_CATEGORIES[0], "featuredCategory"),
+      inputField("YouTube動画リンク", "videoUrl", data.videoUrl, "url"),
       inputField("公開状態", "publicStatus", data.publicStatus || "公開中", "select")
     ].join("");
   }
@@ -620,11 +819,39 @@ $("adminEditForm").addEventListener("submit", async (event) => {
       await api("adminUpdateProfile", { id: state.edit.item.id, data });
       closeEditDialog();
       await loadProfiles(true);
-    } else {
+    } else if (state.edit.type === "recommendation") {
       await api("adminUpdateRecommendation", { id: state.edit.item.id, data });
       closeEditDialog();
       await loadProfiles(true);
+    } else if (state.edit.type === "fanart") {
+      await api("adminUpdateFanArt", { id: state.edit.item.id, category: state.edit.item.category, data });
+      closeEditDialog(); await loadFanArtsAdmin(true);
+    } else {
+      await api("adminUpdateFeaturedVideo", { id: state.edit.item.id, data });
+      closeEditDialog(); await loadFeaturedAdmin(); await loadFeaturedShowcase();
     }
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$("featuredAdminForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector("button[type=submit]");
+  const message = $("featuredAdminMessage");
+  button.disabled = true;
+  message.textContent = "";
+  try {
+    await api("adminCreateFeaturedVideo", {
+      category: $("featuredAdminCategory").value,
+      videoUrl: $("featuredAdminVideoUrl").value
+    });
+    $("featuredAdminVideoUrl").value = "";
+    message.textContent = "管理人おすすめに登録しました。";
+    await loadFeaturedAdmin();
+    await loadFeaturedShowcase();
   } catch (error) {
     message.textContent = error.message;
   } finally {
@@ -643,14 +870,18 @@ $("feedbackAdminSearch").addEventListener("click", () => loadFeedback(true));
 $("feedbackAdminMore").addEventListener("click", () => loadFeedback(false));
 $("profileAdminSearch").addEventListener("click", () => loadProfiles(true));
 $("profileAdminMore").addEventListener("click", () => loadProfiles(false));
+$("fanArtAdminSearch").addEventListener("click", () => loadFanArtsAdmin(true));
+$("fanArtAdminMore").addEventListener("click", () => loadFanArtsAdmin(false));
+$("fanArtAdminCategory").addEventListener("change", () => loadFanArtsAdmin(true));
 
-[$("submissionQuery"), $("feedbackAdminQuery"), $("profileAdminQuery")].forEach((input) => {
+[$("submissionQuery"), $("feedbackAdminQuery"), $("profileAdminQuery"), $("fanArtAdminQuery")].forEach((input) => {
   input.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
     if (input === $("submissionQuery")) loadSubmissions(true);
     else if (input === $("feedbackAdminQuery")) loadFeedback(true);
     else if (input === $("profileAdminQuery")) loadProfiles(true);
+    else if (input === $("fanArtAdminQuery")) loadFanArtsAdmin(true);
   });
 });
 
@@ -661,4 +892,5 @@ window.addEventListener("focus", () => {
   if (state.token) refreshAdminNotificationCounts();
 });
 
+loadFeaturedShowcase();
 if (state.token) setLoggedIn(true);
