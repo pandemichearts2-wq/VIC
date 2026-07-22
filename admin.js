@@ -5,6 +5,7 @@ const state = {
   token: sessionStorage.getItem("vicAdminToken") || "",
   tab: "submissions",
   submissions: { offset: 0, hasMore: false },
+  feedback: { offset: 0, hasMore: false },
   profiles: { offset: 0, hasMore: false },
   recommendations: { offset: 0, hasMore: false },
   edit: null
@@ -86,6 +87,7 @@ document.querySelectorAll(".admin-tab").forEach((button) => {
     document.querySelectorAll(".admin-tab").forEach((item) => item.classList.toggle("active", item === button));
     state.tab = button.dataset.adminTab;
     $("adminPanelSubmissions").hidden = state.tab !== "submissions";
+    $("adminPanelFeedback").hidden = state.tab !== "feedback";
     $("adminPanelProfiles").hidden = state.tab !== "profiles";
     $("adminPanelRecommendations").hidden = state.tab !== "recommendations";
     loadActiveTab();
@@ -102,6 +104,7 @@ function handleAdminError(error, box) {
 
 function loadActiveTab() {
   if (state.tab === "submissions") loadSubmissions(true);
+  else if (state.tab === "feedback") loadFeedback(true);
   else if (state.tab === "profiles") loadProfiles(true);
   else loadRecommendations(true);
 }
@@ -198,6 +201,81 @@ async function loadSubmissions(reset) {
     state.submissions.hasMore = Boolean(data.hasMore);
     $("submissionMore").hidden = !data.hasMore;
     if (!box.children.length) box.innerHTML = '<div class="admin-empty">該当する申請はありません。</div>';
+  } catch (error) {
+    handleAdminError(error, box);
+  }
+}
+
+
+function renderFeedback(items, root) {
+  items.forEach((item) => {
+    const article = document.createElement("article");
+    article.className = "admin-card";
+    article.innerHTML = `
+      <div class="admin-card-head">
+        <div>
+          <span class="admin-badge">お問い合わせ</span>
+          <h3>${esc(item.relatedActivityName || "サイト全般")}</h3>
+          <p>${esc(item.feedbackId)} / ${esc(fmtDate(item.receivedAt))}</p>
+        </div>
+        <span class="admin-status-badge">${esc(item.status || "未確認")}</span>
+      </div>
+      <div class="admin-feedback-message">${esc(item.message || "")}</div>
+      ${item.pageUrl ? `<p class="admin-feedback-page">送信ページ：<a href="${esc(item.pageUrl)}" target="_blank" rel="noopener noreferrer">ページを開く</a></p>` : ""}
+      <div class="admin-feedback-controls">
+        <label>対応状況
+          <select class="admin-feedback-status">
+            <option value="未確認">未確認</option>
+            <option value="対応中">対応中</option>
+            <option value="対応済み">対応済み</option>
+            <option value="対応不要">対応不要</option>
+          </select>
+        </label>
+        <label>対応メモ
+          <textarea class="admin-feedback-note" rows="3" maxlength="1000">${esc(item.reviewNote || "")}</textarea>
+        </label>
+        <button class="admin-button primary" type="button">保存</button>
+      </div>`;
+    const select = article.querySelector(".admin-feedback-status");
+    select.value = item.status || "未確認";
+    article.querySelector("button.admin-button").addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      try {
+        await api("adminUpdateFeedback", {
+          feedbackId: item.feedbackId,
+          status: select.value,
+          reviewNote: article.querySelector(".admin-feedback-note").value
+        });
+        await loadFeedback(true);
+      } catch (error) {
+        window.alert(error.message);
+        button.disabled = false;
+      }
+    });
+    root.appendChild(article);
+  });
+}
+
+async function loadFeedback(reset) {
+  const box = $("feedbackAdminList");
+  if (reset) {
+    state.feedback.offset = 0;
+    box.innerHTML = '<div class="admin-empty">読み込んでいます。</div>';
+  }
+  try {
+    const data = await api("adminListFeedback", {
+      q: $("feedbackAdminQuery").value,
+      status: $("feedbackAdminStatus").value,
+      offset: state.feedback.offset,
+      limit: 30
+    });
+    if (reset) box.innerHTML = "";
+    renderFeedback(data.items || [], box);
+    state.feedback.offset = data.nextOffset || 0;
+    state.feedback.hasMore = Boolean(data.hasMore);
+    $("feedbackAdminMore").hidden = !data.hasMore;
+    if (!box.children.length) box.innerHTML = '<div class="admin-empty">該当するお問い合わせはありません。</div>';
   } catch (error) {
     handleAdminError(error, box);
   }
@@ -385,16 +463,19 @@ $("adminEditForm").addEventListener("submit", async (event) => {
 
 $("submissionSearch").addEventListener("click", () => loadSubmissions(true));
 $("submissionMore").addEventListener("click", () => loadSubmissions(false));
+$("feedbackAdminSearch").addEventListener("click", () => loadFeedback(true));
+$("feedbackAdminMore").addEventListener("click", () => loadFeedback(false));
 $("profileAdminSearch").addEventListener("click", () => loadProfiles(true));
 $("profileAdminMore").addEventListener("click", () => loadProfiles(false));
 $("recommendationAdminSearch").addEventListener("click", () => loadRecommendations(true));
 $("recommendationAdminMore").addEventListener("click", () => loadRecommendations(false));
 
-[$("submissionQuery"), $("profileAdminQuery"), $("recommendationAdminQuery")].forEach((input) => {
+[$("submissionQuery"), $("feedbackAdminQuery"), $("profileAdminQuery"), $("recommendationAdminQuery")].forEach((input) => {
   input.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
     if (input === $("submissionQuery")) loadSubmissions(true);
+    else if (input === $("feedbackAdminQuery")) loadFeedback(true);
     else if (input === $("profileAdminQuery")) loadProfiles(true);
     else loadRecommendations(true);
   });

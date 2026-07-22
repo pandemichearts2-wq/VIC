@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>VIC - VTuber Introduction Center -</title>
   <meta name="description" content="おすすめ動画を通してVTuberの魅力と新しい出会いを届ける紹介サイト">
-  <link rel="stylesheet" href="styles.css?v=20260721-vic-genre10">
+  <link rel="stylesheet" href="styles.css?v=20260722-vic-feedback1">
 </head>
 <body class="home">
   <header class="hero">
@@ -69,9 +69,47 @@
   <footer><div class="wrap">VIC - VTuber Introduction Center -</div></footer>
 
   <audio id="bgmAudio" src="Stream.mp3" loop preload="auto" autoplay></audio>
-  <button id="bgmToggle" class="floating-control bgm-toggle" type="button" aria-pressed="false">BGMを再生</button>
+
+  <div class="floating-controls" aria-label="サイト操作">
+    <button id="bgmToggle" class="floating-control bgm-toggle" type="button" aria-pressed="false">BGMを再生</button>
+    <button id="feedbackToggle" class="floating-control feedback-toggle" type="button" aria-haspopup="dialog" aria-controls="feedbackDialog" aria-expanded="false">お問い合わせ</button>
+  </div>
+
+  <div id="feedbackDialog" class="feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle" hidden>
+    <button class="feedback-dialog-backdrop" type="button" data-feedback-close aria-label="お問い合わせフォームを閉じる"></button>
+    <div class="feedback-dialog-panel" role="document">
+      <button class="feedback-dialog-close" type="button" data-feedback-close aria-label="閉じる">×</button>
+      <p class="eyebrow">Contact VIC</p>
+      <h2 id="feedbackTitle">違反通報・ご意見・ご要望</h2>
+      <p class="feedback-dialog-copy">サイト内で気になったことや、改善してほしいことを自由にご記入ください。</p>
+      <form id="feedbackForm" class="feedback-form" novalidate>
+        <div class="feedback-profile-field">
+          <label for="feedbackProfileSearch" class="feedback-label">該当するVTuber（任意）</label>
+          <p class="feedback-field-help">活動名を入力し、登録済みの候補から選択できます。サイト全般のお問い合わせは未選択で構いません。</p>
+          <div class="feedback-profile-search-wrap">
+            <input id="feedbackProfileSearch" type="search" autocomplete="off" placeholder="活動名・よみかた・個人／企業名で検索" aria-controls="feedbackProfileSuggestions" aria-autocomplete="list">
+            <button id="feedbackProfileClear" class="feedback-profile-clear" type="button" hidden>選択解除</button>
+            <div id="feedbackProfileSuggestions" class="feedback-profile-suggestions" role="listbox" hidden></div>
+          </div>
+          <input id="feedbackProfileId" name="relatedProfileId" type="hidden">
+          <input id="feedbackActivityName" name="relatedActivityName" type="hidden">
+          <p id="feedbackProfileSelected" class="feedback-profile-selected">該当VTuber：未選択</p>
+        </div>
+        <label for="feedbackMessage" class="feedback-label">違反通報・ご意見・ご要望</label>
+        <textarea id="feedbackMessage" name="message" rows="7" maxlength="3000" placeholder="自由にご記入ください" required></textarea>
+        <input class="feedback-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="feedback-form-footer">
+          <p class="feedback-note">送信内容はサイト上に公開されません。</p>
+          <span id="feedbackCount" class="feedback-count">0 / 3000</span>
+          <button id="feedbackSubmit" class="submit-button feedback-submit" type="submit" disabled>送信する</button>
+        </div>
+        <p id="feedbackStatus" class="feedback-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
 
   <script src="config.js"></script>
-  <script src="app.js?v=20260721-vic-genre10-bgm1"></script>
+  
+  <script src="feedback.js?v=20260722-vic-feedback1"></script><script src="app.js?v=20260722-vic-feedback1"></script>
 </body>
 </html>

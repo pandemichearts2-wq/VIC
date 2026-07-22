@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow">
   <title>VIC 管理画面</title>
   <meta name="description" content="VIC管理者専用ページ">
-  <link rel="stylesheet" href="styles.css?v=20260721-vic-genre10">
+  <link rel="stylesheet" href="styles.css?v=20260722-vic-feedback1">
 </head>
 <body class="admin-page">
   <header class="admin-hero">
@@ -41,6 +41,7 @@
 
       <nav class="admin-tabs" aria-label="管理項目">
         <button class="admin-tab active" type="button" data-admin-tab="submissions">申請管理</button>
+        <button class="admin-tab" type="button" data-admin-tab="feedback">お問い合わせ管理</button>
         <button class="admin-tab" type="button" data-admin-tab="profiles">公開VTuber</button>
         <button class="admin-tab" type="button" data-admin-tab="recommendations">公開おすすめ</button>
       </nav>
@@ -63,6 +64,23 @@
         </div>
         <div id="submissionList" class="admin-list"></div>
         <button id="submissionMore" class="admin-button secondary admin-more" type="button" hidden>さらに表示</button>
+      </section>
+
+
+      <section id="adminPanelFeedback" class="admin-panel" hidden>
+        <div class="admin-toolbar admin-toolbar-feedback">
+          <input id="feedbackAdminQuery" type="search" placeholder="内容・VTuber名・お問い合わせIDで検索">
+          <select id="feedbackAdminStatus">
+            <option value="未確認">未確認</option>
+            <option value="">すべての状態</option>
+            <option value="対応中">対応中</option>
+            <option value="対応済み">対応済み</option>
+            <option value="対応不要">対応不要</option>
+          </select>
+          <button id="feedbackAdminSearch" class="admin-button primary" type="button">検索</button>
+        </div>
+        <div id="feedbackAdminList" class="admin-list"></div>
+        <button id="feedbackAdminMore" class="admin-button secondary admin-more" type="button" hidden>さらに表示</button>
       </section>
 
       <section id="adminPanelProfiles" class="admin-panel" hidden>
@@ -105,6 +123,6 @@
 
   <footer><div class="wrap">VIC - VTuber Introduction Center -</div></footer>
   <script src="config.js"></script>
-  <script src="admin.js?v=20260721-vic-genre10"></script>
+  <script src="admin.js?v=20260722-vic-feedback1"></script>
 </body>
 </html>
