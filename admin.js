@@ -10,7 +10,6 @@ const state = {
   profiles: { offset: 0, hasMore: false },
   featured: { items: [] },
   fanart: { offset: 0, hasMore: false },
-  featuredShowcase: { items: [], currentIndex: -1, timer: 0 },
   edit: null,
   notificationTimer: 0
 };
@@ -47,88 +46,6 @@ async function api(action, payload = {}) {
   const data = await response.json();
   if (!data.ok) throw new Error(data.message || "処理できませんでした。");
   return data;
-}
-
-async function publicApi(action, params = {}) {
-  if (!API_URL) throw new Error("API URLが設定されていません。");
-  const url = new URL(API_URL);
-  url.searchParams.set("action", action);
-  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
-  const response = await fetch(url.toString(), { cache: "no-store" });
-  if (!response.ok) throw new Error(`通信に失敗しました（${response.status}）`);
-  const data = await response.json();
-  if (!data.ok) throw new Error(data.message || "処理できませんでした。");
-  return data;
-}
-
-function clearFeaturedShowcaseTimer() {
-  window.clearInterval(state.featuredShowcase.timer);
-  state.featuredShowcase.timer = 0;
-}
-
-function pickNextFeaturedIndex() {
-  const length = state.featuredShowcase.items.length;
-  if (!length) return -1;
-  if (length === 1) return 0;
-  let next = state.featuredShowcase.currentIndex;
-  while (next === state.featuredShowcase.currentIndex) next = Math.floor(Math.random() * length);
-  return next;
-}
-
-function showNextFeaturedVideo() {
-  const stack = $("adminFeaturedStack");
-  if (!stack || !state.featuredShowcase.items.length) return;
-  const nextIndex = pickNextFeaturedIndex();
-  if (nextIndex < 0) return;
-  state.featuredShowcase.currentIndex = nextIndex;
-  const item = state.featuredShowcase.items[nextIndex] || {};
-  const videoUrl = safeUrl(item.videoUrl);
-  const thumbnailUrl = safeUrl(item.thumbnailUrl);
-  if (!videoUrl || !thumbnailUrl) return;
-
-  stack.querySelectorAll(".admin-featured-slide").forEach((slide) => slide.classList.add("is-leaving"));
-  const link = document.createElement("a");
-  link.className = "admin-featured-slide is-entering";
-  link.href = videoUrl;
-  link.target = "_blank";
-  link.rel = "noopener noreferrer";
-  link.setAttribute("aria-label", `${item.category || "管理人おすすめ"}をYouTubeで開く`);
-  link.innerHTML = `
-    <img src="${esc(thumbnailUrl)}" alt="${esc(item.category || "管理人おすすめ動画")}のサムネイル">
-    <span class="admin-featured-overlay">
-      <small>Administrator's Pick</small>
-      <strong>${esc(item.category || "管理人おすすめ")}</strong>
-      <em>動画を見る ↗</em>
-    </span>`;
-  stack.appendChild(link);
-  $("adminFeaturedEmpty")?.remove();
-  window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
-    link.classList.remove("is-entering");
-    link.classList.add("is-active");
-  }));
-  window.setTimeout(() => {
-    stack.querySelectorAll(".admin-featured-slide.is-leaving").forEach((slide) => slide.remove());
-  }, 1500);
-}
-
-async function loadFeaturedShowcase() {
-  const stack = $("adminFeaturedStack");
-  if (!stack) return;
-  clearFeaturedShowcaseTimer();
-  try {
-    const data = await publicApi("featuredVideos");
-    state.featuredShowcase.items = Array.isArray(data.items) ? data.items : [];
-    state.featuredShowcase.currentIndex = -1;
-    stack.querySelectorAll(".admin-featured-slide").forEach((slide) => slide.remove());
-    if (!state.featuredShowcase.items.length) {
-      stack.innerHTML = `<div id="adminFeaturedEmpty" class="admin-featured-empty"><span>Administrator's Pick</span><strong>管理人おすすめを登録すると、ここに表示されます</strong></div>`;
-      return;
-    }
-    showNextFeaturedVideo();
-    state.featuredShowcase.timer = window.setInterval(showNextFeaturedVideo, 5000);
-  } catch (error) {
-    stack.innerHTML = `<div id="adminFeaturedEmpty" class="admin-featured-empty"><span>Administrator's Pick</span><strong>${esc(error.message)}</strong></div>`;
-  }
 }
 
 function setNotificationBadge(id, count, label) {
@@ -658,7 +575,6 @@ function bindFeaturedActions(article, item) {
     try {
       await api("adminDeleteFeaturedVideo", { id: item.id });
       await loadFeaturedAdmin();
-      await loadFeaturedShowcase();
     } catch (error) {
       window.alert(error.message);
     }
@@ -828,7 +744,7 @@ $("adminEditForm").addEventListener("submit", async (event) => {
       closeEditDialog(); await loadFanArtsAdmin(true);
     } else {
       await api("adminUpdateFeaturedVideo", { id: state.edit.item.id, data });
-      closeEditDialog(); await loadFeaturedAdmin(); await loadFeaturedShowcase();
+      closeEditDialog(); await loadFeaturedAdmin();
     }
   } catch (error) {
     message.textContent = error.message;
@@ -851,7 +767,6 @@ $("featuredAdminForm").addEventListener("submit", async (event) => {
     $("featuredAdminVideoUrl").value = "";
     message.textContent = "管理人おすすめに登録しました。";
     await loadFeaturedAdmin();
-    await loadFeaturedShowcase();
   } catch (error) {
     message.textContent = error.message;
   } finally {
@@ -892,5 +807,4 @@ window.addEventListener("focus", () => {
   if (state.token) refreshAdminNotificationCounts();
 });
 
-loadFeaturedShowcase();
 if (state.token) setLoggedIn(true);

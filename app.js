@@ -1,6 +1,7 @@
 const API_URL = window.VIC_CONFIG?.API_URL || "";
 const $ = (id) => document.getElementById(id);
 const DISPLAY_LIMIT = 10;
+const publicFeaturedState = { items: [], currentIndex: -1, timer: 0 };
 
 function safeHttpsUrl(value) {
   try {
@@ -29,6 +30,84 @@ async function requestRecommendations(genre = "") {
   const data = await response.json();
   if (!data.ok) throw new Error(data.message || "おすすめを取得できませんでした。");
   return Array.isArray(data.recommendations) ? data.recommendations.slice(0, DISPLAY_LIMIT) : [];
+}
+
+
+async function requestFeaturedVideos() {
+  if (!API_URL) throw new Error("API URLが設定されていません。");
+  const url = new URL(API_URL);
+  url.searchParams.set("action", "featuredVideos");
+  url.searchParams.set("nonce", `${Date.now()}-${Math.random()}`);
+  const response = await fetch(url.toString(), { method: "GET", cache: "no-store" });
+  if (!response.ok) throw new Error(`管理人おすすめを取得できませんでした（${response.status}）`);
+  const data = await response.json();
+  if (!data.ok) throw new Error(data.message || "管理人おすすめを取得できませんでした。");
+  return Array.isArray(data.items) ? data.items : [];
+}
+
+function pickNextPublicFeaturedIndex() {
+  const length = publicFeaturedState.items.length;
+  if (!length) return -1;
+  if (length === 1) return 0;
+  let next = publicFeaturedState.currentIndex;
+  while (next === publicFeaturedState.currentIndex) next = Math.floor(Math.random() * length);
+  return next;
+}
+
+function showNextPublicFeaturedVideo() {
+  const stack = $("publicFeaturedStack");
+  if (!stack || !publicFeaturedState.items.length) return;
+  const nextIndex = pickNextPublicFeaturedIndex();
+  if (nextIndex < 0) return;
+  publicFeaturedState.currentIndex = nextIndex;
+  const item = publicFeaturedState.items[nextIndex] || {};
+  const videoUrl = safeHttpsUrl(item.videoUrl);
+  const thumbnailUrl = safeHttpsUrl(item.thumbnailUrl);
+  if (!videoUrl || !thumbnailUrl) return;
+
+  stack.querySelectorAll(".vic-featured-slide").forEach((slide) => slide.classList.add("is-leaving"));
+  const link = document.createElement("a");
+  link.className = "vic-featured-slide is-entering";
+  link.href = videoUrl;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.setAttribute("aria-label", `${item.category || "管理人おすすめ"}をYouTubeで開く`);
+  link.innerHTML = `
+    <img src="${esc(thumbnailUrl)}" alt="${esc(item.category || "管理人おすすめ動画")}のサムネイル">
+    <span class="vic-featured-overlay">
+      <small>Administrator's Pick</small>
+      <strong>${esc(item.category || "管理人おすすめ")}</strong>
+      <em>動画を見る ↗</em>
+    </span>`;
+  stack.appendChild(link);
+  $("publicFeaturedEmpty")?.remove();
+  window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+    link.classList.remove("is-entering");
+    link.classList.add("is-active");
+  }));
+  window.setTimeout(() => {
+    stack.querySelectorAll(".vic-featured-slide.is-leaving").forEach((slide) => slide.remove());
+  }, 1500);
+}
+
+async function setupPublicFeaturedShowcase() {
+  const stack = $("publicFeaturedStack");
+  if (!stack) return;
+  window.clearInterval(publicFeaturedState.timer);
+  try {
+    publicFeaturedState.items = await requestFeaturedVideos();
+    publicFeaturedState.currentIndex = -1;
+    stack.querySelectorAll(".vic-featured-slide").forEach((slide) => slide.remove());
+    if (!publicFeaturedState.items.length) {
+      stack.innerHTML = `<div id="publicFeaturedEmpty" class="vic-featured-empty"><span>Administrator's Pick</span><strong>管理人おすすめを登録すると、ここに表示されます</strong></div>`;
+      return;
+    }
+    showNextPublicFeaturedVideo();
+    publicFeaturedState.timer = window.setInterval(showNextPublicFeaturedVideo, 5000);
+  } catch (error) {
+    console.error(error);
+    stack.innerHTML = `<div id="publicFeaturedEmpty" class="vic-featured-empty"><span>Administrator's Pick</span><strong>管理人おすすめを読み込めませんでした</strong></div>`;
+  }
 }
 
 function recommendationCard(item, index) {
@@ -156,5 +235,7 @@ function setupBgm() {
   if (enabled) play();
 }
 
+setupPublicFeaturedShowcase();
 setupRecommendationControls();
 setupBgm();
+window.addEventListener("pagehide", () => window.clearInterval(publicFeaturedState.timer));
