@@ -99,7 +99,7 @@ async function setupPublicFeaturedShowcase() {
     publicFeaturedState.currentIndex = -1;
     stack.querySelectorAll(".vic-featured-slide").forEach((slide) => slide.remove());
     if (!publicFeaturedState.items.length) {
-      stack.innerHTML = `<div id="publicFeaturedEmpty" class="vic-featured-empty"><span>Administrator's Pick</span><strong>管理人おすすめを登録すると、ここに表示されます</strong></div>`;
+      stack.innerHTML = `<div id="publicFeaturedEmpty" class="vic-featured-empty"><span>Administrator's Pick</span><strong>おすすめ表示スペース</strong></div>`;
       return;
     }
     showNextPublicFeaturedVideo();
