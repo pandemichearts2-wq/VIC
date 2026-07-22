@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>おすすめ登録 | VIC</title>
   <meta name="description" content="VICへVTuberとおすすめ動画を登録するページ">
-  <link rel="stylesheet" href="styles.css?v=20260722-vic-feedback1">
+  <link rel="stylesheet" href="styles.css?v=20260722-vic-optional-links1">
 </head>
 <body class="register-page">
   <header class="hero register-hero">
@@ -24,7 +24,7 @@
     <section class="registration-content">
       <p class="eyebrow">Registration Form</p>
       <h2>おすすめを登録する</h2>
-      <p class="registration-copy">初めて登録する場合と、登録済みVTuberへおすすめを追加する場合を選んでください。送信内容は確認後に公開されます。</p>
+      <p class="registration-copy">初めて登録する場合と、登録済みVTuberへおすすめを追加する場合を選んでください。活動名以外は空白でも送信できます。送信内容は確認後に公開されます。</p>
 
       <div class="tabs" role="tablist" aria-label="登録方法">
         <button id="initialTab" class="tab active" type="button" role="tab" aria-selected="true" aria-controls="initialPanel">初回登録</button>
@@ -38,19 +38,28 @@
               <input name="activityName" type="text" maxlength="100" required>
             </label>
             <label>活動名（よみかた）
-              <input name="reading" type="text" maxlength="100" required>
+              <input name="reading" type="text" maxlength="100">
             </label>
             <label>個人 or 企業名
-              <input name="affiliation" type="text" maxlength="120" required>
+              <input name="affiliation" type="text" maxlength="120">
             </label>
             <label>X（旧Twitter）のリンク
-              <input name="xUrl" type="url" inputmode="url" placeholder="https://x.com/..." required>
+              <input name="xUrl" type="url" inputmode="url" placeholder="https://x.com/...">
             </label>
             <label>YouTubeチャンネルのリンク
-              <input name="youtubeUrl" type="url" inputmode="url" placeholder="https://www.youtube.com/@..." required>
+              <input name="youtubeUrl" type="url" inputmode="url" placeholder="https://www.youtube.com/@...">
+            </label>
+            <label>その他リンク1
+              <input name="otherLink1" type="url" inputmode="url" placeholder="https://...">
+            </label>
+            <label>その他リンク2
+              <input name="otherLink2" type="url" inputmode="url" placeholder="https://...">
+            </label>
+            <label>その他リンク3
+              <input name="otherLink3" type="url" inputmode="url" placeholder="https://...">
             </label>
             <label>動画ジャンル
-              <select name="genre" required>
+              <select name="genre">
                 <option value="">選択してください</option>
                 <option value="雑談">雑談</option>
                 <option value="歌枠">歌枠</option>
@@ -71,10 +80,10 @@
               </select>
             </label>
             <label>おすすめ動画リンク
-              <input name="recommendedVideoUrl" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=..." required>
+              <input name="recommendedVideoUrl" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=...">
             </label>
             <label class="wide">おすすめポイント
-              <textarea name="recommendationPoint" rows="5" maxlength="800" placeholder="この動画の好きなところや、見てほしい場面を入力してください" required></textarea>
+              <textarea name="recommendationPoint" rows="5" maxlength="800" placeholder="この動画の好きなところや、見てほしい場面を入力してください"></textarea>
             </label>
           </div>
           <button class="submit-button" type="submit">初回登録を送信する</button>
@@ -173,6 +182,6 @@
 
   <script src="config.js"></script>
   
-  <script src="feedback.js?v=20260722-vic-feedback1"></script><script src="register.js?v=20260722-vic-feedback1"></script>
+  <script src="feedback.js?v=20260722-vic-optional-links1"></script><script src="register.js?v=20260722-vic-optional-links1"></script>
 </body>
 </html>

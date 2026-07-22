@@ -121,6 +121,9 @@ function renderSubmissionPayload(item) {
         <div><dt>個人／企業名</dt><dd>${esc(payload.affiliation)}</dd></div>
         <div><dt>X</dt><dd>${safeUrl(payload.xUrl) ? `<a href="${esc(payload.xUrl)}" target="_blank" rel="noopener noreferrer">リンクを開く</a>` : ""}</dd></div>
         <div><dt>YouTube</dt><dd>${safeUrl(payload.youtubeUrl) ? `<a href="${esc(payload.youtubeUrl)}" target="_blank" rel="noopener noreferrer">チャンネルを開く</a>` : ""}</dd></div>
+        <div><dt>その他リンク1</dt><dd>${safeUrl(payload.otherLink1) ? `<a href="${esc(payload.otherLink1)}" target="_blank" rel="noopener noreferrer">リンクを開く</a>` : ""}</dd></div>
+        <div><dt>その他リンク2</dt><dd>${safeUrl(payload.otherLink2) ? `<a href="${esc(payload.otherLink2)}" target="_blank" rel="noopener noreferrer">リンクを開く</a>` : ""}</dd></div>
+        <div><dt>その他リンク3</dt><dd>${safeUrl(payload.otherLink3) ? `<a href="${esc(payload.otherLink3)}" target="_blank" rel="noopener noreferrer">リンクを開く</a>` : ""}</dd></div>
         <div><dt>動画ジャンル</dt><dd>${esc(payload.genre || "その他")}</dd></div>
         <div><dt>おすすめ動画</dt><dd>${videoUrl ? `<a href="${esc(videoUrl)}" target="_blank" rel="noopener noreferrer">動画を開く</a>` : ""}</dd></div>
       </dl>
@@ -292,6 +295,9 @@ function profileCard(item) {
       <dl class="admin-data-grid">
         <div><dt>X</dt><dd>${safeUrl(data.xUrl) ? `<a href="${esc(data.xUrl)}" target="_blank" rel="noopener noreferrer">リンクを開く</a>` : "未登録"}</dd></div>
         <div><dt>YouTube</dt><dd>${safeUrl(data.youtubeUrl) ? `<a href="${esc(data.youtubeUrl)}" target="_blank" rel="noopener noreferrer">チャンネルを開く</a>` : "未登録"}</dd></div>
+        <div><dt>その他リンク1</dt><dd>${safeUrl(data.otherLink1) ? `<a href="${esc(data.otherLink1)}" target="_blank" rel="noopener noreferrer">リンクを開く</a>` : "未登録"}</dd></div>
+        <div><dt>その他リンク2</dt><dd>${safeUrl(data.otherLink2) ? `<a href="${esc(data.otherLink2)}" target="_blank" rel="noopener noreferrer">リンクを開く</a>` : "未登録"}</dd></div>
+        <div><dt>その他リンク3</dt><dd>${safeUrl(data.otherLink3) ? `<a href="${esc(data.otherLink3)}" target="_blank" rel="noopener noreferrer">リンクを開く</a>` : "未登録"}</dd></div>
       </dl>
       <div class="admin-card-actions">
         <button class="admin-button primary" type="button" data-edit>編集</button>
@@ -411,6 +417,9 @@ function openEditDialog(type, item) {
       inputField("個人 or 企業名", "affiliation", data.affiliation),
       inputField("X（旧Twitter）のリンク", "xUrl", data.xUrl, "url"),
       inputField("YouTubeチャンネルのリンク", "youtubeUrl", data.youtubeUrl, "url"),
+      inputField("その他リンク1", "otherLink1", data.otherLink1, "url"),
+      inputField("その他リンク2", "otherLink2", data.otherLink2, "url"),
+      inputField("その他リンク3", "otherLink3", data.otherLink3, "url"),
       inputField("公開状態", "status", data.status || "公開", "profileStatus")
     ].join("");
   } else {

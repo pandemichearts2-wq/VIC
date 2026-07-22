@@ -54,12 +54,15 @@ function setupTabs() {
 }
 
 function validateInitial(data) {
-  const required = ["activityName", "reading", "affiliation", "xUrl", "youtubeUrl", "genre", "recommendedVideoUrl", "recommendationPoint"];
-  if (required.some((key) => !String(data[key] || "").trim())) throw new Error("すべての項目を入力してください。");
-  if (!VIDEO_GENRES.includes(String(data.genre || ""))) throw new Error("動画ジャンルを選択してください。");
-  for (const key of ["xUrl", "youtubeUrl", "recommendedVideoUrl"]) {
-    if (!isHttpsUrl(data[key])) throw new Error("リンクは https:// から入力してください。");
+  if (!String(data.activityName || "").trim()) throw new Error("活動名を入力してください。");
+  for (const key of ["xUrl", "youtubeUrl", "otherLink1", "otherLink2", "otherLink3"]) {
+    if (String(data[key] || "").trim() && !isHttpsUrl(data[key])) {
+      throw new Error("入力したリンクは https:// から入力してください。");
+    }
   }
+  const videoUrl = String(data.recommendedVideoUrl || "").trim();
+  if (videoUrl && !isHttpsUrl(videoUrl)) throw new Error("おすすめ動画リンクは https:// から入力してください。");
+  if (data.genre && !VIDEO_GENRES.includes(String(data.genre))) throw new Error("動画ジャンルを選択してください。");
 }
 
 function validateAddition(data) {
