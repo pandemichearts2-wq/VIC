@@ -323,6 +323,17 @@ body::before{
   transition:transform .2s ease;
 }
 .text-link:hover{transform:translateX(5px)}
+.recommendation-registration-note{
+  max-width:640px;
+  margin:18px 0 0;
+  color:#765d51;
+  font-size:14px;
+  line-height:1.85;
+}
+.recommendation-registration-note small{
+  color:#927a6e;
+  font-size:12px;
+}
 
 /* Registration */
 .register-main{padding:36px 0 100px}
