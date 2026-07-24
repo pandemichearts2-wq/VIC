@@ -393,6 +393,7 @@ body::before{
 }
 .today-encounter::before{width:340px;height:340px;right:-110px;top:-130px}
 .today-encounter::after{width:180px;height:180px;left:-90px;bottom:-80px}
+.today-encounter > *{min-width:0;max-width:100%}
 .today-encounter-heading .eyebrow{text-transform:none;letter-spacing:.18em}
 .today-encounter-heading h2{
   margin:0;
@@ -402,6 +403,7 @@ body::before{
   font-weight:500;
   line-height:1.16;
 }
+.today-encounter-heading h2 span{display:block}
 .today-encounter-machine{display:grid;width:100%;min-width:0;place-items:center;justify-self:stretch;gap:16px;text-align:center}
 .today-encounter-button{
   position:relative;
@@ -446,8 +448,18 @@ body::before{
 .today-encounter-capsule::after{inset:0 0 0 50%;background:#ba5940}
 .today-encounter-capsule i{position:absolute;z-index:1;left:50%;top:0;width:2px;height:100%;background:rgba(90,43,29,.18);transform:translateX(-50%)}
 .today-encounter-guide{max-width:370px;margin:0;color:#806c62;font-size:13px;line-height:1.8}
-.today-encounter-stage{grid-column:1/-1;min-height:224px;margin-top:2px;padding-top:32px;border-top:1px solid rgba(126,77,51,.13)}
-.today-encounter-draw{position:relative;display:none;width:170px;height:170px;margin:0 auto}
+.today-encounter-stage{
+  grid-column:1/-1;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  min-height:224px;
+  margin-top:2px;
+  padding-top:32px;
+  overflow:hidden;
+  border-top:1px solid rgba(126,77,51,.13);
+}
+.today-encounter-draw{position:relative;display:none;width:170px;height:170px;max-width:100%;margin:0 auto}
 .today-encounter-stage.is-drawing .today-encounter-draw{display:grid;place-items:center}
 .today-encounter-draw-orbit{position:absolute;inset:12px;border:1px dashed rgba(170,85,54,.36);border-radius:50%;animation:vicEncounterOrbit 1.15s linear infinite}
 .today-encounter-draw-orbit.orbit-two{inset:31px;animation-direction:reverse;animation-duration:.76s}
@@ -455,7 +467,13 @@ body::before{
 .today-encounter-draw-capsule::before,.today-encounter-draw-capsule::after{content:"";position:absolute;inset:0 50% 0 0;background:#ffe5a6}
 .today-encounter-draw-capsule::after{inset:0 0 0 50%;background:#ce6848}
 .today-encounter-draw-capsule i{position:absolute;z-index:1;left:50%;width:3px;height:100%;background:rgba(86,40,27,.18);transform:translateX(-50%)}
-.today-encounter-result{opacity:0;transform:translateY(18px) scale(.985)}
+.today-encounter-result{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  opacity:0;
+  transform:translateY(18px) scale(.985);
+}
 .today-encounter-stage.is-revealed .today-encounter-result{opacity:1;transform:none;transition:opacity .48s ease,transform .48s cubic-bezier(.2,.85,.25,1.2)}
 .today-encounter-card{
   position:relative;
@@ -463,7 +481,11 @@ body::before{
   grid-template-columns:76px minmax(0,1fr) auto;
   align-items:center;
   gap:24px;
+  width:100%;
+  max-width:100%;
+  min-width:0;
   padding:28px;
+  overflow:hidden;
   border:1px solid rgba(126,77,51,.17);
   border-radius:26px;
   background:rgba(255,255,255,.82);
@@ -471,12 +493,12 @@ body::before{
 }
 .today-encounter-card-seal{display:grid;place-items:center;width:72px;height:72px;border:1px solid rgba(189,139,67,.38);border-radius:50%;box-shadow:inset 0 0 0 6px rgba(189,139,67,.08)}
 .today-encounter-card-seal span{color:#9b6c32;font-family:Georgia,serif;font-size:20px;font-weight:700;letter-spacing:.08em}
-.today-encounter-card-copy{min-width:0}
-.today-encounter-kicker{margin:0 0 4px;color:#a2753d;font-family:Georgia,serif;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
-.today-encounter-card h3{margin:0;color:#4d3025;font-family:Georgia,"Yu Mincho",serif;font-size:clamp(28px,4vw,46px);font-weight:500;line-height:1.25;word-break:break-word}
-.today-encounter-meta{margin:6px 0 0;color:#8a7063;font-size:13px}
-.today-encounter-message{margin:13px 0 0;color:#6a5044;font-size:14px}
-.today-encounter-links{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+.today-encounter-card-copy{width:100%;max-width:100%;min-width:0;overflow:hidden}
+.today-encounter-kicker{margin:0 0 4px;color:#a2753d;font-family:Georgia,serif;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;overflow-wrap:anywhere}
+.today-encounter-card h3{max-width:100%;margin:0;color:#4d3025;font-family:Georgia,"Yu Mincho",serif;font-size:clamp(28px,4vw,46px);font-weight:500;line-height:1.25;word-break:break-word;overflow-wrap:anywhere}
+.today-encounter-meta{max-width:100%;margin:6px 0 0;color:#8a7063;font-size:13px;overflow-wrap:anywhere}
+.today-encounter-message{max-width:100%;margin:13px 0 0;color:#6a5044;font-size:14px;overflow-wrap:anywhere}
+.today-encounter-links{display:flex;flex-wrap:wrap;gap:9px;width:100%;max-width:100%;min-width:0;margin-top:18px}
 .today-encounter-links a,.today-encounter-again{
   display:inline-flex;
   align-items:center;
@@ -490,7 +512,12 @@ body::before{
   font-size:12px;
   font-weight:800;
   text-decoration:none;
+  max-width:100%;
+  min-width:0;
   cursor:pointer;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  text-align:center;
   transition:transform .18s ease,background .18s ease;
 }
 .today-encounter-links a:hover,.today-encounter-again:hover{transform:translateY(-2px);background:#fff1df}
@@ -510,14 +537,20 @@ body::before{
 @keyframes vicEncounterMiniCapsule{from{transform:rotate(-34deg) translateY(-3px)}to{transform:rotate(-12deg) translateY(4px)}}
 @keyframes vicEncounterButton{from{transform:rotate(-2deg) scale(.995)}to{transform:rotate(2deg) scale(1.01)}}
 @keyframes vicEncounterComplete{0%{transform:scale(.96)}55%{transform:scale(1.045)}100%{transform:scale(1)}}
+@media(max-width:980px){
+  .today-encounter-card{grid-template-columns:64px minmax(0,1fr);gap:18px;padding:24px}
+  .today-encounter-card-seal{width:62px;height:62px}
+  .today-encounter-again{grid-column:1/-1;justify-self:center}
+}
 @media(max-width:760px){
   .today-encounter{grid-template-columns:1fr;gap:30px;margin-bottom:48px;padding:42px 20px;border-radius:28px;text-align:center}
   .today-encounter-heading h2{font-size:40px}
   .today-encounter-machine{width:100%}
   .today-encounter-button{width:min(236px,100%);height:min(236px,calc(100vw - 64px));margin-inline:auto}
-  .today-encounter-stage{padding-top:26px}
-  .today-encounter-card{grid-template-columns:1fr;justify-items:center;gap:16px;padding:23px 18px;text-align:center}
-  .today-encounter-links{justify-content:center}
+  .today-encounter-stage{width:100%;max-width:100%;padding-top:26px}
+  .today-encounter-card{grid-template-columns:minmax(0,1fr);justify-items:center;gap:16px;width:100%;max-width:100%;padding:23px 18px;text-align:center}
+  .today-encounter-links{justify-content:center;width:100%}
+  .today-encounter-links a{justify-content:center}
   .today-encounter-again{justify-self:center}
 }
 @media(prefers-reduced-motion:reduce){
