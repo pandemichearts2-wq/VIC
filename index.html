@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>VIC - VTuber Introduction Center -</title>
   <meta name="description" content="おすすめ動画を通してVTuberの魅力と新しい出会いを届ける紹介サイト">
-  <link rel="stylesheet" href="styles.css?v=20260722-vic-mobile-hero-fix1">
+  <link rel="stylesheet" href="styles.css?v=20260724-vic-today-encounter1">
 </head>
 <body class="home">
   <header class="hero">
@@ -31,6 +31,32 @@
       <p>当サイトは現在活動中のVtuberさんの輝かしいお姿を、<br>より多くの方に知っていただきたく運営しております。</p>
       <p>皆様のご情報を元にさらに発展できます。</p>
       <p>あなたの”好き”や”情報”をお貸しいただけますと幸いです。</p>
+    </section>
+
+    <section class="today-encounter" aria-labelledby="todayEncounterTitle">
+      <div class="today-encounter-heading">
+        <p class="eyebrow">Today&apos;s Encounter</p>
+        <h2 id="todayEncounterTitle">運命のひとりに、<br>出逢う。</h2>
+      </div>
+
+      <div class="today-encounter-machine">
+        <button id="todayEncounterButton" class="today-encounter-button" type="button" aria-controls="todayEncounterStage" aria-expanded="false">
+          <span class="today-encounter-button-ring" aria-hidden="true"></span>
+          <span class="today-encounter-capsule" aria-hidden="true"><i></i></span>
+          <span class="today-encounter-button-copy"><small>VIC GACHA</small><strong>きょうの<br>出逢い</strong></span>
+        </button>
+        <p class="today-encounter-guide">ボタンを押すと、登録されたVTuberの中から一人をご紹介します。</p>
+      </div>
+
+      <div id="todayEncounterStage" class="today-encounter-stage" aria-live="polite" hidden>
+        <div class="today-encounter-draw" aria-hidden="true">
+          <span class="today-encounter-draw-orbit orbit-one"></span>
+          <span class="today-encounter-draw-orbit orbit-two"></span>
+          <span class="today-encounter-draw-capsule"><i></i></span>
+        </div>
+        <div id="todayEncounterResult" class="today-encounter-result"></div>
+      </div>
+      <p id="todayEncounterStatus" class="today-encounter-status" role="status"></p>
     </section>
 
     <section class="home-intro">
@@ -139,6 +165,6 @@
 
   <script src="config.js"></script>
   
-  <script src="feedback.js?v=20260722-vic-feedback1"></script><script src="home-fanart.js?v=20260722-vic-fanart1"></script><script src="app.js?v=20260722-vic-order-swap1"></script>
+  <script src="feedback.js?v=20260722-vic-feedback1"></script><script src="home-fanart.js?v=20260722-vic-fanart1"></script><script src="app.js?v=20260724-vic-today-encounter1"></script>
 </body>
 </html>

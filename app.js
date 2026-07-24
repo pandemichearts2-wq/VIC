@@ -33,6 +33,18 @@ async function requestRecommendations(genre = "") {
 }
 
 
+async function requestDailyEncounter() {
+  if (!API_URL) throw new Error("API URLが設定されていません。");
+  const url = new URL(API_URL);
+  url.searchParams.set("action", "dailyEncounter");
+  url.searchParams.set("nonce", `${Date.now()}-${Math.random()}`);
+  const response = await fetch(url.toString(), { method: "GET", cache: "no-store" });
+  if (!response.ok) throw new Error(`きょうの出逢いを取得できませんでした（${response.status}）`);
+  const data = await response.json();
+  if (!data.ok) throw new Error(data.message || "きょうの出逢いを取得できませんでした。");
+  return data.profile || null;
+}
+
 async function requestFeaturedVideos() {
   if (!API_URL) throw new Error("API URLが設定されていません。");
   const url = new URL(API_URL);
@@ -181,6 +193,94 @@ async function loadRecommendations() {
   }
 }
 
+function encounterLink(url, label, className = "") {
+  const href = safeHttpsUrl(url);
+  if (!href) return "";
+  return `<a${className ? ` class="${className}"` : ""} href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(label)}<span aria-hidden="true">↗</span></a>`;
+}
+
+function renderDailyEncounter(profile) {
+  const result = $("todayEncounterResult");
+  if (!result) return;
+  if (!profile) {
+    result.innerHTML = `
+      <div class="today-encounter-empty">
+        <p class="eyebrow">Next Encounter</p>
+        <h3>新しい出逢いを準備中です</h3>
+        <p>公開中のVTuberが登録されると、ここからランダムにご紹介します。</p>
+      </div>`;
+    return;
+  }
+
+  const activityName = profile.activityName || "活動名未設定";
+  const details = [profile.reading, profile.affiliation].filter(Boolean);
+  const links = [
+    encounterLink(profile.youtubeUrl, "YouTubeチャンネル", "is-primary"),
+    encounterLink(profile.xUrl, "Xを開く"),
+    encounterLink(profile.otherLink1, "リンク 1"),
+    encounterLink(profile.otherLink2, "リンク 2"),
+    encounterLink(profile.otherLink3, "リンク 3")
+  ].filter(Boolean).join("");
+
+  result.innerHTML = `
+    <article class="today-encounter-card">
+      <div class="today-encounter-card-seal" aria-hidden="true"><span>VIC</span></div>
+      <div class="today-encounter-card-copy">
+        <p class="today-encounter-kicker">Your Encounter Today</p>
+        <h3>${esc(activityName)}</h3>
+        ${details.length ? `<p class="today-encounter-meta">${esc(details.join(" / "))}</p>` : ""}
+        <p class="today-encounter-message">今日ここで出逢えた、あなたへのおすすめVTuberです。</p>
+        ${links ? `<div class="today-encounter-links">${links}</div>` : `<p class="today-encounter-no-link">公開リンクはまだ登録されていません。</p>`}
+      </div>
+      <button id="todayEncounterAgain" class="today-encounter-again" type="button">もう一度まわす</button>
+    </article>`;
+
+  $("todayEncounterAgain")?.addEventListener("click", drawDailyEncounter);
+}
+
+async function drawDailyEncounter() {
+  const button = $("todayEncounterButton");
+  const stage = $("todayEncounterStage");
+  const result = $("todayEncounterResult");
+  const status = $("todayEncounterStatus");
+  if (!button || !stage || !result || !status || button.disabled) return;
+
+  button.disabled = true;
+  button.classList.remove("is-complete");
+  button.classList.add("is-turning");
+  button.setAttribute("aria-expanded", "true");
+  stage.hidden = false;
+  stage.classList.remove("is-revealed");
+  stage.classList.add("is-drawing");
+  result.innerHTML = "";
+  status.textContent = "カプセルを選んでいます。";
+
+  const startedAt = Date.now();
+  try {
+    const profile = await requestDailyEncounter();
+    const remaining = Math.max(0, 1500 - (Date.now() - startedAt));
+    await new Promise((resolve) => window.setTimeout(resolve, remaining));
+    renderDailyEncounter(profile);
+    stage.classList.remove("is-drawing");
+    stage.classList.add("is-revealed");
+    button.classList.remove("is-turning");
+    button.classList.add("is-complete");
+    status.textContent = profile ? `${profile.activityName || "VTuber"}さんと出逢いました。` : "公開中のVTuberはまだ登録されていません。";
+    window.setTimeout(() => stage.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+  } catch (error) {
+    console.error(error);
+    stage.classList.remove("is-drawing");
+    button.classList.remove("is-turning");
+    status.textContent = error.message || "きょうの出逢いを読み込めませんでした。";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function setupDailyEncounter() {
+  $("todayEncounterButton")?.addEventListener("click", drawDailyEncounter);
+}
+
 function setupRecommendationControls() {
   $("recommendationGenre")?.addEventListener("change", loadRecommendations);
   $("recommendationShuffle")?.addEventListener("click", loadRecommendations);
@@ -236,6 +336,7 @@ function setupBgm() {
 }
 
 setupPublicFeaturedShowcase();
+setupDailyEncounter();
 setupRecommendationControls();
 setupBgm();
 window.addEventListener("pagehide", () => window.clearInterval(publicFeaturedState.timer));
