@@ -393,6 +393,7 @@ body::before{
 }
 .today-encounter::before{width:340px;height:340px;right:-110px;top:-130px}
 .today-encounter::after{width:180px;height:180px;left:-90px;bottom:-80px}
+.today-encounter-heading .eyebrow{text-transform:none;letter-spacing:.18em}
 .today-encounter-heading h2{
   margin:0;
   color:#4d3025;
@@ -401,15 +402,22 @@ body::before{
   font-weight:500;
   line-height:1.16;
 }
-.today-encounter-machine{display:grid;justify-items:center;gap:16px;text-align:center}
+.today-encounter-machine{display:grid;width:100%;min-width:0;place-items:center;justify-self:stretch;gap:16px;text-align:center}
 .today-encounter-button{
   position:relative;
   display:grid;
   place-items:center;
   width:clamp(218px,25vw,292px);
-  aspect-ratio:1;
+  height:clamp(218px,25vw,292px);
+  flex:0 0 auto;
+  padding:0;
   border:0;
   border-radius:50%;
+  appearance:none;
+  -webkit-appearance:none;
+  overflow:hidden;
+  line-height:1;
+  text-align:center;
   color:#fffaf2;
   background:
     radial-gradient(circle at 37% 28%,rgba(255,255,255,.52),transparent 16%),
@@ -421,12 +429,16 @@ body::before{
   cursor:pointer;
   transition:transform .25s ease,filter .25s ease,box-shadow .25s ease;
   isolation:isolate;
+  justify-self:center;
+  align-self:center;
+  margin:0 auto;
+  max-width:100%;
 }
 .today-encounter-button:hover:not(:disabled){transform:translateY(-5px) rotate(-2deg);filter:brightness(1.035);box-shadow:0 31px 56px rgba(144,66,42,.32),inset 0 0 0 8px rgba(255,255,255,.42),inset 0 0 0 15px rgba(121,54,37,.13)}
 .today-encounter-button:focus-visible{outline:3px solid rgba(170,85,54,.42);outline-offset:8px}
 .today-encounter-button:disabled{cursor:wait}
-.today-encounter-button-ring{position:absolute;inset:18px;border:1px dashed rgba(255,250,242,.48);border-radius:50%}
-.today-encounter-button-copy{position:relative;z-index:2;display:grid;gap:4px;line-height:1.22;text-shadow:0 3px 12px rgba(86,42,30,.28)}
+.today-encounter-button-ring{position:absolute;inset:18px;border:1px dashed rgba(255,250,242,.48);border-radius:50%;pointer-events:none}
+.today-encounter-button-copy{position:absolute;inset:0;z-index:2;display:grid;place-content:center;justify-items:center;gap:4px;width:100%;height:100%;padding:34px;text-align:center;line-height:1.22;text-shadow:0 3px 12px rgba(86,42,30,.28);pointer-events:none}
 .today-encounter-button-copy small{font-family:Georgia,serif;font-size:10px;font-weight:700;letter-spacing:.24em}
 .today-encounter-button-copy strong{font-family:"Yu Mincho",serif;font-size:clamp(25px,3.2vw,39px);font-weight:700;letter-spacing:.08em}
 .today-encounter-capsule{position:absolute;right:26px;bottom:28px;width:54px;height:38px;border-radius:999px;overflow:hidden;transform:rotate(-24deg);box-shadow:0 8px 16px rgba(81,37,24,.18)}
@@ -501,7 +513,8 @@ body::before{
 @media(max-width:760px){
   .today-encounter{grid-template-columns:1fr;gap:30px;margin-bottom:48px;padding:42px 20px;border-radius:28px;text-align:center}
   .today-encounter-heading h2{font-size:40px}
-  .today-encounter-button{width:min(236px,72vw)}
+  .today-encounter-machine{width:100%}
+  .today-encounter-button{width:min(236px,100%);height:min(236px,calc(100vw - 64px));margin-inline:auto}
   .today-encounter-stage{padding-top:26px}
   .today-encounter-card{grid-template-columns:1fr;justify-items:center;gap:16px;padding:23px 18px;text-align:center}
   .today-encounter-links{justify-content:center}
