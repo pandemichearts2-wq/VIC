@@ -266,7 +266,6 @@ async function drawDailyEncounter() {
     button.classList.remove("is-turning");
     button.classList.add("is-complete");
     status.textContent = profile ? `${profile.activityName || "VTuber"}さんと出逢いました。` : "公開中のVTuberはまだ登録されていません。";
-    window.setTimeout(() => stage.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
   } catch (error) {
     console.error(error);
     stage.classList.remove("is-drawing");
