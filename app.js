@@ -294,21 +294,68 @@ function encounterRecommendationMedia(recommendation) {
         <strong>おすすめ動画は<br>まだ登録されていません</strong>
       </div>`;
   }
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&mute=1&loop=1&playlist=${encodeURIComponent(videoId)}&playsinline=1&controls=1&rel=0&modestbranding=1`;
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&mute=1&loop=1&playlist=${encodeURIComponent(videoId)}&playsinline=1&controls=1&disablekb=1&fs=0&rel=0&modestbranding=1&iv_load_policy=3`;
+  const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
   const genre = recommendation?.genre || "おすすめ動画";
+  const activityName = recommendation?.activityName || "出逢ったVTuber";
   return `
-    <div class="today-encounter-video">
+    <div class="today-encounter-video" data-encounter-video>
       <div class="today-encounter-video-frame">
         <iframe
           src="${esc(embedUrl)}"
-          title="${esc(recommendation?.activityName || "出逢ったVTuber")}のおすすめ動画"
+          title="${esc(activityName)}のおすすめ動画"
           loading="eager"
-          allow="autoplay; encrypted-media; picture-in-picture"
-          allowfullscreen></iframe>
+          tabindex="-1"
+          aria-hidden="true"
+          allow="autoplay; encrypted-media; picture-in-picture"></iframe>
+        <a class="today-encounter-video-link"
+           href="${esc(watchUrl)}"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="${esc(activityName)}のおすすめ動画をYouTubeで開く">
+          <span>YouTubeで見る</span><b aria-hidden="true">↗</b>
+        </a>
       </div>
-      <p><span>${esc(genre)}</span> 音声なしで再生中</p>
+      <p class="today-encounter-video-status"><span>${esc(genre)}</span> 音声なしで自動再生中</p>
+      <div class="today-encounter-ad-controls">
+        <button class="today-encounter-ad-unlock" type="button" data-ad-unlock>広告を操作する</button>
+        <small>※広告をスキップしたい場合は「広告を操作する」ボタンを押すとプレビュー画面を操作できます。</small>
+      </div>
     </div>`;
 }
+
+function unlockEncounterVideoControls(button) {
+  const video = button.closest("[data-encounter-video]");
+  if (!video || video.classList.contains("is-interactive")) return;
+  const frame = video.querySelector(".today-encounter-video-frame");
+  const iframe = frame?.querySelector("iframe");
+  const link = frame?.querySelector(".today-encounter-video-link");
+  if (!frame || !iframe || !link) return;
+
+  video.classList.add("is-interactive");
+  iframe.removeAttribute("aria-hidden");
+  button.disabled = true;
+
+  let remaining = 5;
+  button.textContent = `操作できます（${remaining}秒）`;
+  const timer = window.setInterval(() => {
+    remaining -= 1;
+    if (remaining > 0) {
+      button.textContent = `操作できます（${remaining}秒）`;
+      return;
+    }
+    window.clearInterval(timer);
+    video.classList.remove("is-interactive");
+    iframe.setAttribute("aria-hidden", "true");
+    button.disabled = false;
+    button.textContent = "広告を操作する";
+  }, 1000);
+}
+
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-ad-unlock]");
+  if (button) unlockEncounterVideoControls(button);
+});
 
 function encounterLink(url, label, className = "") {
   const href = safeHttpsUrl(url);
