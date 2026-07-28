@@ -1,6 +1,6 @@
 const API_URL = window.VIC_CONFIG?.API_URL || "";
 const $ = (id) => document.getElementById(id);
-const DISPLAY_LIMIT = 10;
+const DISPLAY_LIMIT = 4;
 const publicFeaturedState = { items: [], currentIndex: -1, timer: 0 };
 
 function safeHttpsUrl(value) {
