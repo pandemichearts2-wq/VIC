@@ -1945,3 +1945,44 @@ body.feedback-dialog-open{overflow:hidden}
   .assemble-heading .assemble-char,
   .assemble-heading .intro-title-line{transition:none!important;transform:none!important;opacity:1!important;filter:none!important}
 }
+
+
+/* ===== Daily encounter: muted recommendation video ===== */
+.today-encounter-card{grid-template-columns:76px minmax(0,1fr) minmax(280px,370px)}
+.today-encounter-video{
+  align-self:stretch;
+  display:grid;
+  align-content:center;
+  gap:9px;
+  min-width:0;
+  padding:10px;
+  border:1px solid rgba(126,77,51,.16);
+  border-radius:19px;
+  background:linear-gradient(145deg,rgba(255,252,247,.96),rgba(255,235,211,.76));
+  box-shadow:0 13px 30px rgba(91,51,32,.10);
+}
+.today-encounter-video-frame{
+  position:relative;
+  width:100%;
+  aspect-ratio:16/9;
+  overflow:hidden;
+  border-radius:13px;
+  background:#2f201a;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);
+}
+.today-encounter-video-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.today-encounter-video>p{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 3px;color:#846b5e;font-size:10px;font-weight:700;letter-spacing:.04em}
+.today-encounter-video>p span{overflow:hidden;color:#9d633f;text-overflow:ellipsis;white-space:nowrap}
+.today-encounter-video-empty{min-height:190px;place-content:center;text-align:center}
+.today-encounter-video-empty>span{color:#ac7b45;font-family:Georgia,serif;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.today-encounter-video-empty>strong{margin-top:5px;color:#6b4c3e;font-family:"Yu Mincho",serif;font-size:18px;line-height:1.65}
+@media(max-width:980px){
+  .today-encounter-card{grid-template-columns:64px minmax(0,1fr)}
+  .today-encounter-video{grid-column:1/-1;width:min(100%,620px);justify-self:center}
+}
+@media(max-width:760px){
+  .today-encounter-video{width:100%;padding:8px;border-radius:16px;text-align:left}
+  .today-encounter-video-frame{border-radius:11px}
+  .today-encounter-video>p{font-size:9px}
+  .today-encounter-video-empty{text-align:center}
+}

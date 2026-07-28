@@ -270,6 +270,46 @@ async function loadRecommendations() {
   }
 }
 
+function youtubeVideoId(value) {
+  try {
+    const url = new URL(String(value || ""));
+    const host = url.hostname.replace(/^www\./, "").toLowerCase();
+    if (host === "youtu.be") return url.pathname.split("/").filter(Boolean)[0] || "";
+    if (["youtube.com", "m.youtube.com", "music.youtube.com", "youtube-nocookie.com"].includes(host)) {
+      if (url.pathname === "/watch") return url.searchParams.get("v") || "";
+      const parts = url.pathname.split("/").filter(Boolean);
+      if (["shorts", "live", "embed", "v"].includes(parts[0])) return parts[1] || "";
+    }
+  } catch (_) {}
+  return "";
+}
+
+function encounterRecommendationMedia(recommendation) {
+  const videoUrl = safeHttpsUrl(recommendation?.videoUrl);
+  const videoId = youtubeVideoId(videoUrl);
+  if (!videoId) {
+    return `
+      <div class="today-encounter-video today-encounter-video-empty">
+        <span>Recommended Video</span>
+        <strong>おすすめ動画は<br>まだ登録されていません</strong>
+      </div>`;
+  }
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&mute=1&loop=1&playlist=${encodeURIComponent(videoId)}&playsinline=1&controls=1&rel=0&modestbranding=1`;
+  const genre = recommendation?.genre || "おすすめ動画";
+  return `
+    <div class="today-encounter-video">
+      <div class="today-encounter-video-frame">
+        <iframe
+          src="${esc(embedUrl)}"
+          title="${esc(recommendation?.activityName || "出逢ったVTuber")}のおすすめ動画"
+          loading="eager"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          allowfullscreen></iframe>
+      </div>
+      <p><span>${esc(genre)}</span> 音声なしで再生中</p>
+    </div>`;
+}
+
 function encounterLink(url, label, className = "") {
   const href = safeHttpsUrl(url);
   if (!href) return "";
@@ -309,10 +349,8 @@ function renderDailyEncounter(profile) {
         <p class="today-encounter-message">今日ここで出逢えた、あなたへのおすすめVTuberです。</p>
         ${links ? `<div class="today-encounter-links">${links}</div>` : `<p class="today-encounter-no-link">公開リンクはまだ登録されていません。</p>`}
       </div>
-      <button id="todayEncounterAgain" class="today-encounter-again" type="button">もう一度まわす</button>
+      ${encounterRecommendationMedia(profile.recommendation)}
     </article>`;
-
-  $("todayEncounterAgain")?.addEventListener("click", drawDailyEncounter);
 }
 
 async function drawDailyEncounter() {
