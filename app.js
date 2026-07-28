@@ -335,6 +335,83 @@ function setupBgm() {
 }
 
 
+
+function setupHeadingAssemble() {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const targets = document.querySelectorAll('.assemble-heading');
+  const scatterSets = [
+    [-34, 28, -14], [30, -24, 11], [-18, -30, 9], [22, 24, -10],
+    [-26, 12, 13], [18, -18, -8], [-12, 26, 7], [28, 14, -12]
+  ];
+  const makeChar = (ch, index) => {
+    if (ch === ' ') {
+      const space = document.createElement('span');
+      space.className = 'assemble-space';
+      space.setAttribute('aria-hidden', 'true');
+      return space;
+    }
+    const span = document.createElement('span');
+    span.className = 'assemble-char';
+    span.textContent = ch;
+    span.setAttribute('aria-hidden', 'true');
+    const set = scatterSets[index % scatterSets.length];
+    span.style.setProperty('--scatter-x', `${set[0]}px`);
+    span.style.setProperty('--scatter-y', `${set[1]}px`);
+    span.style.setProperty('--scatter-r', `${set[2]}deg`);
+    span.style.setProperty('--char-delay', `${Math.min(index * 44, 520)}ms`);
+    return span;
+  };
+  const makeWord = (text, index) => {
+    const word = document.createElement('span');
+    word.className = 'assemble-word';
+    word.setAttribute('aria-hidden', 'true');
+    const set = scatterSets[index % scatterSets.length];
+    word.style.setProperty('--scatter-x', `${set[0]}px`);
+    word.style.setProperty('--scatter-y', `${set[1]}px`);
+    word.style.setProperty('--scatter-r', `${set[2]}deg`);
+    word.style.setProperty('--char-delay', `${Math.min(index * 130, 480)}ms`);
+    word.textContent = text;
+    return word;
+  };
+
+  targets.forEach((element) => {
+    if (element.dataset.assembleReady === 'true') return;
+    element.dataset.assembleReady = 'true';
+    const original = element.textContent || '';
+    element.setAttribute('aria-label', original.replace(/\s+/g,' ').trim());
+    const mode = element.dataset.assemble || 'chars';
+    const parts = [];
+    if (mode === 'words') {
+      Array.from(element.childNodes).forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE && node.classList?.contains('intro-title-line')) {
+          parts.push(node.cloneNode(true));
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const text = (node.textContent || '').trim();
+          if (text) parts.push(makeWord(text, parts.length));
+        } else if (node.nodeType === Node.TEXT_NODE) {
+          const text = (node.textContent || '').trim();
+          if (text) parts.push(makeWord(text, parts.length));
+        }
+      });
+    } else if (mode === 'lines') {
+      const html = element.innerHTML.split(/<br\s*\/?\s*>/i);
+      html.forEach((lineHtml, lineIndex) => {
+        const line = document.createElement('span');
+        line.className = 'assemble-line';
+        line.setAttribute('aria-hidden', 'true');
+        const text = lineHtml.replace(/<[^>]+>/g,'');
+        Array.from(text).forEach((ch, index) => line.appendChild(makeChar(ch, lineIndex * 10 + index)));
+        parts.push(line);
+      });
+    } else {
+      Array.from(original).forEach((ch, index) => parts.push(makeChar(ch, index)));
+    }
+    element.innerHTML = '';
+    parts.forEach((part) => element.appendChild(part));
+    if (reduceMotion) element.classList.add('is-visible');
+  });
+}
+
 function setupScrollReveal() {
   const selector = [
     ".site-introduction",
@@ -354,13 +431,15 @@ function setupScrollReveal() {
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      entry.target.classList.add("is-visible");
-      observer.unobserve(entry.target);
+      if (entry.isIntersecting && entry.intersectionRatio >= 0.12) {
+        entry.target.classList.add("is-visible");
+      } else if (!entry.isIntersecting) {
+        entry.target.classList.remove("is-visible");
+      }
     });
   }, {
-    threshold: 0.12,
-    rootMargin: "0px 0px -7% 0px"
+    threshold: [0, 0.12],
+    rootMargin: "0px 0px -4% 0px"
   });
 
   const prepare = (root = document) => {
@@ -372,7 +451,7 @@ function setupScrollReveal() {
       element.dataset.scrollRevealReady = "true";
       element.classList.add("scroll-reveal");
       if (element.matches(".daily-recommendation-card")) {
-        element.style.setProperty("--reveal-delay", `${Math.min(index % 4, 3) * 85}ms`);
+        element.style.setProperty("--reveal-delay", `${Math.min(index % 4, 3) * 160}ms`);
       }
       observer.observe(element);
     });
@@ -389,6 +468,7 @@ function setupScrollReveal() {
   mutationObserver.observe(document.body, { childList: true, subtree: true });
 }
 
+setupHeadingAssemble();
 setupScrollReveal();
 setupPublicFeaturedShowcase();
 setupDailyEncounter();
