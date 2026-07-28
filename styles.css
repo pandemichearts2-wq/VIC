@@ -351,6 +351,71 @@ body::before{
   transition:transform .2s ease;
 }
 .text-link:hover{transform:translateX(5px)}
+/* Stylish primary CTA for recommendation registration */
+.home-intro .recommendation-cta{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  gap:22px;
+  min-height:62px;
+  margin-top:36px;
+  padding:12px 13px 12px 29px;
+  border:1px solid rgba(255,255,255,.60);
+  border-radius:999px;
+  color:#fffdf8;
+  background:
+    linear-gradient(135deg,rgba(139,61,42,.99) 0%,rgba(197,101,61,.98) 54%,rgba(231,151,93,.98) 100%);
+  box-shadow:
+    0 18px 38px rgba(133,62,39,.25),
+    inset 0 1px 0 rgba(255,255,255,.34);
+  font-family:"Yu Mincho",serif;
+  font-size:clamp(18px,1.75vw,22px);
+  font-weight:800;
+  line-height:1;
+  letter-spacing:.10em;
+  text-shadow:0 1px 10px rgba(82,34,23,.18);
+  transition:transform .22s ease,box-shadow .22s ease,filter .22s ease;
+}
+.home-intro .recommendation-cta::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:-40% auto -40% -30%;
+  width:38%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);
+  transform:skewX(-18deg);
+  transition:left .55s ease;
+}
+.home-intro .recommendation-cta span{
+  display:grid;
+  place-items:center;
+  width:38px;
+  height:38px;
+  flex:0 0 38px;
+  border:1px solid rgba(255,255,255,.56);
+  border-radius:50%;
+  color:#8f432f;
+  background:rgba(255,253,248,.94);
+  box-shadow:0 7px 18px rgba(88,35,23,.17);
+  font-family:Georgia,serif;
+  font-size:18px;
+  line-height:1;
+  transition:transform .22s ease,background .22s ease;
+}
+.home-intro .recommendation-cta:hover{
+  transform:translateY(-3px);
+  filter:brightness(1.025);
+  box-shadow:
+    0 24px 48px rgba(133,62,39,.31),
+    inset 0 1px 0 rgba(255,255,255,.40);
+}
+.home-intro .recommendation-cta:hover::before{left:118%}
+.home-intro .recommendation-cta:hover span{transform:translateX(3px);background:#fff}
+.home-intro .recommendation-cta:focus-visible{
+  outline:3px solid rgba(197,101,61,.32);
+  outline-offset:5px;
+}
+
 .recommendation-registration-note{
   max-width:640px;
   margin:18px 0 0;
@@ -719,6 +784,14 @@ footer{padding:30px 0 70px;border-top:1px solid var(--line);color:#8f7162;text-a
   .home-intro h2{font-size:42px}
   .intro-title{gap:10px}
   .intro-title-line{flex-basis:42px;min-width:28px}
+  .home-intro .recommendation-cta{
+    min-height:58px;
+    gap:16px;
+    padding:11px 12px 11px 22px;
+    font-size:17px;
+    letter-spacing:.075em;
+  }
+  .home-intro .recommendation-cta span{width:36px;height:36px;flex-basis:36px;font-size:17px}
   .registration-content{padding:30px 18px;border-radius:26px}
   .form-grid{grid-template-columns:1fr}
   .wide{grid-column:auto}
