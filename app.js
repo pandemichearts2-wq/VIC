@@ -1,8 +1,22 @@
 const API_URL = window.VIC_CONFIG?.API_URL || "";
 const $ = (id) => document.getElementById(id);
 const DISPLAY_LIMIT = 3;
+const LAST_ENCOUNTER_STORAGE_KEY = "vicLastEncounterProfileId";
 const publicFeaturedState = { items: [], currentIndex: -1, timer: 0 };
 const recommendationCarouselState = { timer: 0, centerIndex: 1, paused: false };
+let lastEncounterProfileId = readLastEncounterProfileId();
+
+function readLastEncounterProfileId() {
+  try { return String(window.localStorage.getItem(LAST_ENCOUNTER_STORAGE_KEY) || ""); }
+  catch (_) { return ""; }
+}
+
+function rememberLastEncounterProfileId(profileId) {
+  lastEncounterProfileId = String(profileId || "");
+  if (!lastEncounterProfileId) return;
+  try { window.localStorage.setItem(LAST_ENCOUNTER_STORAGE_KEY, lastEncounterProfileId); }
+  catch (_) { /* Storage may be unavailable in private browsing. */ }
+}
 
 function safeHttpsUrl(value) {
   try {
@@ -34,10 +48,11 @@ async function requestRecommendations(genre = "") {
 }
 
 
-async function requestDailyEncounter() {
+async function requestDailyEncounter(excludeProfileId = "") {
   if (!API_URL) throw new Error("API URLが設定されていません。");
   const url = new URL(API_URL);
   url.searchParams.set("action", "dailyEncounter");
+  if (excludeProfileId) url.searchParams.set("excludeProfileId", String(excludeProfileId));
   url.searchParams.set("nonce", `${Date.now()}-${Math.random()}`);
   const response = await fetch(url.toString(), { method: "GET", cache: "no-store" });
   if (!response.ok) throw new Error(`きょうの出逢いを取得できませんでした（${response.status}）`);
@@ -419,7 +434,8 @@ async function drawDailyEncounter() {
 
   const startedAt = Date.now();
   try {
-    const profile = await requestDailyEncounter();
+    const profile = await requestDailyEncounter(lastEncounterProfileId);
+    if (profile?.profileId) rememberLastEncounterProfileId(profile.profileId);
     const remaining = Math.max(0, 1500 - (Date.now() - startedAt));
     await new Promise((resolve) => window.setTimeout(resolve, remaining));
     renderDailyEncounter(profile);
