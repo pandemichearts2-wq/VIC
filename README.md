@@ -12,3 +12,6 @@ ZIP内のファイルをGitHubへすべて上書きしてください。Apps Scr
 
 ## 今回の変更
 - 公開ページのフッターに、ファンメイドサイトであり公式ではない旨の注意書きを追加。
+
+## 今回の変更
+- トップページの「Community Recommendation」と「Today's Encounter」の表示順を入れ替えました。
