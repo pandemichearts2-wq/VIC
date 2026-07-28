@@ -1,7 +1,8 @@
 const API_URL = window.VIC_CONFIG?.API_URL || "";
 const $ = (id) => document.getElementById(id);
-const DISPLAY_LIMIT = 4;
+const DISPLAY_LIMIT = 3;
 const publicFeaturedState = { items: [], currentIndex: -1, timer: 0 };
+const recommendationCarouselState = { timer: 0, centerIndex: 1, paused: false };
 
 function safeHttpsUrl(value) {
   try {
@@ -137,7 +138,7 @@ function recommendationCard(item, index) {
     </span>` : "";
 
   return `
-    <a class="daily-recommendation-card" href="${esc(videoUrl)}" target="_blank" rel="noopener noreferrer"
+    <a class="daily-recommendation-card" data-carousel-card data-carousel-index="${index}" href="${esc(videoUrl)}" target="_blank" rel="noopener noreferrer"
        aria-label="${esc(activityName)}の${esc(genre)}おすすめ動画を見る">
       <span class="daily-recommendation-seal" aria-hidden="true"><span>VIC</span></span>
       <span class="daily-recommendation-copy">
@@ -152,10 +153,83 @@ function recommendationCard(item, index) {
     </a>`;
 }
 
+function stopRecommendationCarousel() {
+  window.clearInterval(recommendationCarouselState.timer);
+  recommendationCarouselState.timer = 0;
+}
+
+function applyRecommendationCarouselPositions(animate = true) {
+  const list = $("recommendationList");
+  if (!list) return;
+  const cards = Array.from(list.querySelectorAll("[data-carousel-card]"));
+  if (!cards.length) return;
+
+  const count = cards.length;
+  const center = ((recommendationCarouselState.centerIndex % count) + count) % count;
+  const left = (center - 1 + count) % count;
+  const right = (center + 1) % count;
+
+  list.classList.toggle("is-carousel-ready", animate);
+  cards.forEach((card, index) => {
+    card.classList.remove("is-carousel-left", "is-carousel-center", "is-carousel-right", "is-carousel-single");
+    if (count === 1) card.classList.add("is-carousel-single");
+    else if (index === center) card.classList.add("is-carousel-center");
+    else if (index === left) card.classList.add("is-carousel-left");
+    else if (index === right) card.classList.add("is-carousel-right");
+    card.setAttribute("aria-hidden", index === center || count === 1 ? "false" : "true");
+  });
+}
+
+function rotateRecommendationCarousel() {
+  const list = $("recommendationList");
+  const count = list?.querySelectorAll("[data-carousel-card]").length || 0;
+  if (count < 2 || recommendationCarouselState.paused || document.hidden) return;
+  recommendationCarouselState.centerIndex = (recommendationCarouselState.centerIndex + 1) % count;
+  applyRecommendationCarouselPositions(true);
+}
+
+function startRecommendationCarousel() {
+  stopRecommendationCarousel();
+  const list = $("recommendationList");
+  const cards = Array.from(list?.querySelectorAll("[data-carousel-card]") || []);
+  recommendationCarouselState.centerIndex = cards.length >= 3 ? 1 : 0;
+  applyRecommendationCarouselPositions(false);
+  window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+    list?.classList.add("is-carousel-ready");
+    applyRecommendationCarouselPositions(true);
+  }));
+  if (cards.length > 1) {
+    recommendationCarouselState.timer = window.setInterval(rotateRecommendationCarousel, 4800);
+  }
+}
+
+function setupRecommendationCarouselInteraction() {
+  const list = $("recommendationList");
+  if (!list || list.dataset.carouselInteractionReady === "true") return;
+  list.dataset.carouselInteractionReady = "true";
+  list.addEventListener("mouseenter", () => { recommendationCarouselState.paused = true; });
+  list.addEventListener("mouseleave", () => { recommendationCarouselState.paused = false; });
+  list.addEventListener("focusin", () => { recommendationCarouselState.paused = true; });
+  list.addEventListener("focusout", (event) => {
+    if (!list.contains(event.relatedTarget)) recommendationCarouselState.paused = false;
+  });
+  list.addEventListener("click", (event) => {
+    const card = event.target.closest("[data-carousel-card]");
+    if (!card || card.classList.contains("is-carousel-center") || card.classList.contains("is-carousel-single")) return;
+    event.preventDefault();
+    const index = Number(card.dataset.carouselIndex);
+    if (Number.isFinite(index)) {
+      recommendationCarouselState.centerIndex = index;
+      applyRecommendationCarouselPositions(true);
+    }
+  });
+}
+
 function renderRecommendations(items, genre) {
   const list = $("recommendationList");
   const status = $("recommendationStatus");
   if (!list || !status) return;
+  stopRecommendationCarousel();
 
   const cards = (Array.isArray(items) ? items : [])
     .slice(0, DISPLAY_LIMIT)
@@ -164,6 +238,7 @@ function renderRecommendations(items, genre) {
     .join("");
 
   if (!cards) {
+    list.classList.remove("is-carousel-ready");
     list.innerHTML = "";
     status.textContent = genre
       ? `「${genre}」で公開中のおすすめはまだありません。`
@@ -171,6 +246,8 @@ function renderRecommendations(items, genre) {
   } else {
     list.innerHTML = cards;
     status.textContent = `${genre || "すべてのジャンル"}から${items.length}件をランダム表示しています。`;
+    setupRecommendationCarouselInteraction();
+    startRecommendationCarousel();
   }
 }
 
@@ -178,7 +255,7 @@ async function loadRecommendations() {
   const genre = $("recommendationGenre")?.value || "";
   const list = $("recommendationList");
   const status = $("recommendationStatus");
-  const buttons = [$("recommendationShuffle"), $("recommendationRefresh")].filter(Boolean);
+  const buttons = [$("recommendationRefresh")].filter(Boolean);
   if (list) list.innerHTML = '<p class="status-message">おすすめを選んでいます。</p>';
   if (status) status.textContent = "";
   buttons.forEach((button) => { button.disabled = true; });
@@ -282,7 +359,6 @@ function setupDailyEncounter() {
 
 function setupRecommendationControls() {
   $("recommendationGenre")?.addEventListener("change", loadRecommendations);
-  $("recommendationShuffle")?.addEventListener("click", loadRecommendations);
   $("recommendationRefresh")?.addEventListener("click", loadRecommendations);
   loadRecommendations();
 }
@@ -419,7 +495,6 @@ function setupScrollReveal() {
     ".today-encounter",
     ".recommendation-section",
     ".vic-home-fanart",
-    ".recommendation-list .daily-recommendation-card",
     ".home-fanart-card"
   ].join(",");
 
@@ -474,4 +549,7 @@ setupPublicFeaturedShowcase();
 setupDailyEncounter();
 setupRecommendationControls();
 setupBgm();
-window.addEventListener("pagehide", () => window.clearInterval(publicFeaturedState.timer));
+window.addEventListener("pagehide", () => {
+  window.clearInterval(publicFeaturedState.timer);
+  stopRecommendationCarousel();
+});
