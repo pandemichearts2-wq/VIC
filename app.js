@@ -115,7 +115,7 @@ async function setupPublicFeaturedShowcase() {
       return;
     }
     showNextPublicFeaturedVideo();
-    publicFeaturedState.timer = window.setInterval(showNextPublicFeaturedVideo, 5000);
+    publicFeaturedState.timer = window.setInterval(showNextPublicFeaturedVideo, 8000);
   } catch (error) {
     console.error(error);
     stack.innerHTML = `<div id="publicFeaturedEmpty" class="vic-featured-empty"><span>Administrator's Pick</span><strong>管理人おすすめを読み込めませんでした</strong></div>`;
