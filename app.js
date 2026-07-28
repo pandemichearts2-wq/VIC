@@ -334,6 +334,62 @@ function setupBgm() {
   if (enabled) play();
 }
 
+
+function setupScrollReveal() {
+  const selector = [
+    ".site-introduction",
+    ".home-intro",
+    ".today-encounter",
+    ".recommendation-section",
+    ".vic-home-fanart",
+    ".recommendation-list .daily-recommendation-card",
+    ".home-fanart-card"
+  ].join(",");
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    document.querySelectorAll(selector).forEach((element) => element.classList.add("scroll-reveal", "is-visible"));
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("is-visible");
+      observer.unobserve(entry.target);
+    });
+  }, {
+    threshold: 0.12,
+    rootMargin: "0px 0px -7% 0px"
+  });
+
+  const prepare = (root = document) => {
+    const targets = [];
+    if (root instanceof Element && root.matches(selector)) targets.push(root);
+    root.querySelectorAll?.(selector).forEach((element) => targets.push(element));
+    targets.forEach((element, index) => {
+      if (element.dataset.scrollRevealReady === "true") return;
+      element.dataset.scrollRevealReady = "true";
+      element.classList.add("scroll-reveal");
+      if (element.matches(".daily-recommendation-card")) {
+        element.style.setProperty("--reveal-delay", `${Math.min(index % 4, 3) * 85}ms`);
+      }
+      observer.observe(element);
+    });
+  };
+
+  prepare(document);
+  const mutationObserver = new MutationObserver((records) => {
+    records.forEach((record) => {
+      record.addedNodes.forEach((node) => {
+        if (node instanceof Element) prepare(node);
+      });
+    });
+  });
+  mutationObserver.observe(document.body, { childList: true, subtree: true });
+}
+
+setupScrollReveal();
 setupPublicFeaturedShowcase();
 setupDailyEncounter();
 setupRecommendationControls();

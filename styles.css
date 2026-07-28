@@ -1830,3 +1830,43 @@ body.feedback-dialog-open{overflow:hidden}
   .recommendation-list .daily-recommendation-action{padding:7px 5px;font-size:9px;line-height:1.35}
 }
 
+
+
+/* ===== Scroll reveal: calm, one-time entrance animation ===== */
+.reveal-ready .scroll-reveal{
+  opacity:0;
+  transform:translate3d(0,34px,0) scale(.992);
+  filter:blur(2px);
+  transition:
+    opacity .78s cubic-bezier(.22,.72,.22,1) var(--reveal-delay,0ms),
+    transform .88s cubic-bezier(.22,.72,.22,1) var(--reveal-delay,0ms),
+    filter .72s ease var(--reveal-delay,0ms);
+  will-change:opacity,transform,filter;
+}
+.reveal-ready .scroll-reveal.is-visible{
+  opacity:1;
+  transform:translate3d(0,0,0) scale(1);
+  filter:blur(0);
+}
+.reveal-ready .recommendation-list .scroll-reveal{
+  transform:translate3d(0,24px,0) scale(.985);
+}
+.reveal-ready .recommendation-list .scroll-reveal.is-visible{
+  transform:translate3d(0,0,0) scale(1);
+}
+@media(max-width:720px){
+  .reveal-ready .scroll-reveal{
+    transform:translate3d(0,22px,0) scale(.996);
+    filter:blur(1px);
+    transition-duration:.62s,.70s,.56s;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .reveal-ready .scroll-reveal,
+  .reveal-ready .scroll-reveal.is-visible{
+    opacity:1!important;
+    transform:none!important;
+    filter:none!important;
+    transition:none!important;
+  }
+}
