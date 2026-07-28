@@ -9,7 +9,7 @@ const SPREADSHEET_ID_KEY = 'VIC_RECOMMEND_SPREADSHEET_ID';
 const MAX_SEARCH_RESULTS = 20;
 const ADMIN_PASSWORD_HASH_KEY = 'VIC_ADMIN_PASSWORD_HASH';
 const ADMIN_SESSION_SECONDS = 21600;
-const VIDEO_GENRES = ['雑談','歌枠','ゲーム実況','お絵描き','ASMR','料理','開封','旅行・旅','作業','企画','耐久','コラボ','案件','ニュース','読書・朗読','その他'];
+const VIDEO_GENRES = ['雑談','歌枠','歌ってみた','オリジナルソング','ゲーム実況','お絵描き','ASMR','料理','開封','旅行・旅','作業','企画','耐久','コラボ','案件','ニュース','読書・朗読','その他'];
 
 function onOpen() {
   SpreadsheetApp.getUi()
