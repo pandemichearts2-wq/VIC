@@ -1,7 +1,7 @@
 const API_URL = window.VIC_CONFIG?.API_URL || "";
 const $ = (id) => document.getElementById(id);
 const VIDEO_GENRES = ["雑談", "歌枠", "歌ってみた", "オリジナルソング", "ゲーム実況", "お絵描き", "ASMR", "料理", "開封", "旅行・旅", "作業", "企画", "耐久", "コラボ", "案件", "ニュース", "読書・朗読", "その他"];
-const FEATURED_CATEGORIES = ["管理人おすすめ歌みた", "管理人おすすめ歌枠"];
+const FEATURED_CATEGORIES = ["管理人おすすめ歌みた", "管理人おすすめ歌枠", "管理人おすすめオリジナルソング"];
 const state = {
   token: sessionStorage.getItem("vicAdminToken") || "",
   tab: "submissions",
